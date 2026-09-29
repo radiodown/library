@@ -1,4 +1,7 @@
-import ReviewViewer from './ReviewViewer'
+import { toPreviewText } from '../utils/reviewPreview'
+import ReadingHistory from './ReadingHistory'
+import QuoteList from './QuoteList'
+import { todayString } from '../utils/stats'
 
 const STATUS_LABEL = {
   wishlist: '읽고 싶음',
@@ -10,12 +13,52 @@ const STATUS_LABEL = {
 export default function BookDetail({
   book,
   reviews,
+  readings,
+  quotes,
+  saveReading,
+  removeReading,
+  saveQuote,
+  removeQuote,
+  addOrUpdateBook,
   removeReview,
   onAddReview,
   onEditReview,
+  onViewReview,
   onEditBook,
   onDeleteBook,
 }) {
+  const today = todayString()
+  // 다시 읽는 중인 회차: 시작은 했지만 아직 완독일이 없는 재독 기록
+  const activeReread = readings.find((r) => r.startDate && !r.finishDate)
+
+  // 상태에 맞는 "지금 할 일" 버튼 하나. 클릭하면 오늘 날짜로 자동 기록합니다.
+  const progressAction = (() => {
+    if (activeReread) {
+      return {
+        label: `■ ${readings.indexOf(activeReread) + 2}회차 읽기 완료`,
+        run: () => saveReading({ ...activeReread, finishDate: today }),
+      }
+    }
+    if (book.status === 'wishlist') {
+      return {
+        label: '▶ 읽기 시작',
+        // 읽고 싶음 상태에서 미리 들어 있던 날짜는 무시하고 오늘부터 시작으로 기록
+        run: () => addOrUpdateBook({ ...book, status: 'reading', startDate: today, finishDate: '' }),
+      }
+    }
+    if (book.status === 'reading') {
+      return {
+        label: '■ 읽기 완료',
+        run: () => addOrUpdateBook({ ...book, status: 'finished', finishDate: today }),
+      }
+    }
+    return {
+      label: '↻ 다시 읽기 시작',
+      run: () =>
+        saveReading({ bookId: book.id, startDate: today, finishDate: '', rating: null, memo: '' }),
+    }
+  })()
+
   const handleDeleteReview = (id) => {
     if (!window.confirm('이 감상문을 삭제할까요?')) return
     removeReview(id)
@@ -49,6 +92,14 @@ export default function BookDetail({
             </p>
           )}
           <div className="book-detail__actions">
+            <button
+              type="button"
+              className="book-detail__progress"
+              title={`오늘(${today})로 기록됩니다`}
+              onClick={progressAction.run}
+            >
+              {progressAction.label}
+            </button>
             <button onClick={onEditBook}>정보 수정</button>
             <button onClick={onDeleteBook} className="danger">
               책 삭제
@@ -56,6 +107,15 @@ export default function BookDetail({
           </div>
         </div>
       </div>
+
+      <ReadingHistory
+        book={book}
+        readings={readings}
+        saveReading={saveReading}
+        removeReading={removeReading}
+      />
+
+      <QuoteList book={book} quotes={quotes} saveQuote={saveQuote} removeQuote={removeQuote} />
 
       <div className="book-detail__reviews">
         <div className="book-detail__reviews-header">
@@ -70,15 +130,19 @@ export default function BookDetail({
             <li key={review.id} className="review-list__item">
               <div className="review-list__meta">
                 <span className="format-badge">{review.format}</span>
+                <span>{review.content.length.toLocaleString()}자</span>
                 <span>{new Date(review.updatedAt).toLocaleString()}</span>
                 <div className="review-list__item-actions">
+                  <button onClick={() => onViewReview(review)}>보기</button>
                   <button onClick={() => onEditReview(review)}>수정</button>
                   <button onClick={() => handleDeleteReview(review.id)} className="danger">
                     삭제
                   </button>
                 </div>
               </div>
-              <ReviewViewer format={review.format} content={review.content} />
+              <p className="review-list__preview">
+                {toPreviewText(review.format, review.content)}
+              </p>
             </li>
           ))}
         </ul>

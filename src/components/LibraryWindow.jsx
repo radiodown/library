@@ -11,6 +11,8 @@ export default function LibraryWindow({
   busy,
   error,
   fileName,
+  lastSaved,
+  canAutoSave,
   books,
   fsaSupported,
   newLibrary,
@@ -20,7 +22,14 @@ export default function LibraryWindow({
   removeBook,
   listReviews,
   removeReview,
+  readings,
+  saveReading,
+  removeReading,
+  quotes,
+  saveQuote,
+  removeQuote,
   onOpenReviewWindow,
+  onViewReview,
 }) {
   const [selectedBookId, setSelectedBookId] = useState(null)
   const [bookFormMode, setBookFormMode] = useState(null) // null | 'new' | book object
@@ -29,6 +38,8 @@ export default function LibraryWindow({
   // App이 reviewsVersion 변경으로 다시 렌더링될 때마다 이 값도 최신 DB 상태로 새로 계산됩니다.
   // (다른 창에서 감상문을 저장/삭제해도 반영되는 이유)
   const reviews = selectedBook ? listReviews(selectedBook.id) : []
+  const bookReadings = selectedBook ? readings.filter((r) => r.bookId === selectedBook.id) : []
+  const bookQuotes = selectedBook ? quotes.filter((q) => q.bookId === selectedBook.id) : []
 
   const handleSaveBookForm = (book) => {
     const id = addOrUpdateBook(book)
@@ -38,7 +49,7 @@ export default function LibraryWindow({
 
   const handleDeleteBook = () => {
     if (!selectedBook) return
-    if (!window.confirm(`"${selectedBook.title}"을(를) 삭제할까요? 관련 감상문도 함께 삭제됩니다.`)) return
+    if (!window.confirm(`"${selectedBook.title}"을(를) 삭제할까요? 감상문, 회차, 인용구도 함께 삭제됩니다.`)) return
     removeBook(selectedBook.id)
     setSelectedBookId(null)
   }
@@ -51,6 +62,8 @@ export default function LibraryWindow({
           isDirty={isDirty}
           busy={busy}
           fileName={fileName}
+          lastSaved={lastSaved}
+          canAutoSave={canAutoSave}
           fsaSupported={fsaSupported}
           onNew={newLibrary}
           onOpen={openLibrary}
@@ -82,12 +95,17 @@ export default function LibraryWindow({
 
           <section className="app__detail">
             {bookFormMode === 'new' && (
-              <BookForm onSave={handleSaveBookForm} onCancel={() => setBookFormMode(null)} />
+              <BookForm
+                books={books}
+                onSave={handleSaveBookForm}
+                onCancel={() => setBookFormMode(null)}
+              />
             )}
 
             {bookFormMode && bookFormMode !== 'new' && (
               <BookForm
                 book={bookFormMode}
+                books={books}
                 onSave={handleSaveBookForm}
                 onCancel={() => setBookFormMode(null)}
               />
@@ -97,9 +115,17 @@ export default function LibraryWindow({
               <BookDetail
                 book={selectedBook}
                 reviews={reviews}
+                readings={bookReadings}
+                quotes={bookQuotes}
+                saveReading={saveReading}
+                removeReading={removeReading}
+                saveQuote={saveQuote}
+                removeQuote={removeQuote}
+                addOrUpdateBook={addOrUpdateBook}
                 removeReview={removeReview}
                 onAddReview={() => onOpenReviewWindow(selectedBook, null)}
                 onEditReview={(review) => onOpenReviewWindow(selectedBook, review)}
+                onViewReview={(review) => onViewReview(selectedBook, review)}
                 onEditBook={() => setBookFormMode(selectedBook)}
                 onDeleteBook={handleDeleteBook}
               />

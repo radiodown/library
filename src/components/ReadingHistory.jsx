@@ -1,0 +1,164 @@
+import { useState } from 'react'
+import { todayString } from '../utils/stats'
+
+/** 다시 읽기(회차) 한 건을 입력/수정하는 인라인 폼. */
+function ReadingForm({ initial, onSave, onCancel }) {
+  const [form, setForm] = useState(initial)
+  const update = (patch) => setForm((prev) => ({ ...prev, ...patch }))
+
+  const handleSubmit = (e) => {
+    e.preventDefault()
+    if (form.startDate && form.finishDate && form.finishDate < form.startDate) {
+      window.alert('완독일이 시작일보다 빠를 수 없습니다.')
+      return
+    }
+    onSave({
+      ...form,
+      rating: form.rating === '' || form.rating == null ? null : Number(form.rating),
+    })
+  }
+
+  return (
+    <form className="reading-form" onSubmit={handleSubmit}>
+      <label>
+        시작일
+        <input
+          type="date"
+          value={form.startDate}
+          onChange={(e) => update({ startDate: e.target.value })}
+        />
+      </label>
+      <label>
+        완독일
+        <input
+          type="date"
+          value={form.finishDate}
+          onChange={(e) => update({ finishDate: e.target.value })}
+        />
+      </label>
+      <label>
+        별점
+        <select value={form.rating ?? ''} onChange={(e) => update({ rating: e.target.value })}>
+          <option value="">없음</option>
+          {[1, 2, 3, 4, 5].map((n) => (
+            <option key={n} value={n}>
+              {'★'.repeat(n)}
+            </option>
+          ))}
+        </select>
+      </label>
+      <label className="reading-form__memo">
+        메모
+        <input
+          value={form.memo}
+          onChange={(e) => update({ memo: e.target.value })}
+          placeholder="예: 두 번째 읽으니 결말이 다르게 보임"
+        />
+      </label>
+      <div className="reading-form__actions">
+        <button type="submit">저장</button>
+        <button type="button" onClick={onCancel}>
+          취소
+        </button>
+      </div>
+    </form>
+  )
+}
+
+function ReadingRow({ label, reading, note, onEdit, onDelete }) {
+  return (
+    <li className="reading-list__item">
+      <span className="reading-list__no">{label}</span>
+      <span className="reading-list__body">
+        <span>
+          {reading.startDate || '?'} ~ {reading.finishDate || '읽는 중'}
+          {reading.rating ? <span className="book-detail__rating"> {'★'.repeat(reading.rating)}</span> : null}
+        </span>
+        {reading.memo && <span className="reading-list__memo">{reading.memo}</span>}
+        {note && <span className="reading-list__memo">{note}</span>}
+      </span>
+      {onEdit && (
+        <span className="reading-list__actions">
+          <button type="button" onClick={onEdit}>
+            수정
+          </button>
+          <button type="button" className="danger" onClick={onDelete}>
+            삭제
+          </button>
+        </span>
+      )}
+    </li>
+  )
+}
+
+/**
+ * 책의 독서 회차. 1회차는 책 정보의 시작일/완독일/별점이고(정보 수정에서 바꿉니다),
+ * 2회차부터는 여기서 추가하는 "다시 읽기" 기록입니다.
+ */
+export default function ReadingHistory({ book, readings, saveReading, removeReading }) {
+  const [editing, setEditing] = useState(null) // null | 'new' | reading object
+
+  const hasFirst = book.startDate || book.finishDate || book.rating
+
+  const handleSave = (form) => {
+    saveReading({ ...form, id: editing === 'new' ? undefined : editing.id, bookId: book.id })
+    setEditing(null)
+  }
+
+  const handleDelete = (reading) => {
+    if (!window.confirm('이 회차 기록을 삭제할까요?')) return
+    removeReading(reading.id)
+  }
+
+  return (
+    <div className="book-detail__section">
+      <div className="book-detail__section-header">
+        <h3>독서 회차</h3>
+        <button type="button" onClick={() => setEditing('new')} disabled={editing !== null}>
+          + 다시 읽기
+        </button>
+      </div>
+
+      {!hasFirst && readings.length === 0 && editing === null && (
+        <p className="book-detail__empty">기록된 회차가 없습니다.</p>
+      )}
+
+      <ul className="reading-list">
+        {hasFirst && (
+          <ReadingRow
+            label="1회차"
+            reading={book}
+            note="책 정보 수정에서 바꿀 수 있습니다"
+          />
+        )}
+        {readings.map((reading, i) =>
+          editing && editing !== 'new' && editing.id === reading.id ? (
+            <li key={reading.id}>
+              <ReadingForm
+                initial={{ ...reading }}
+                onSave={handleSave}
+                onCancel={() => setEditing(null)}
+              />
+            </li>
+          ) : (
+            <ReadingRow
+              key={reading.id}
+              label={`${i + 2}회차`}
+              reading={reading}
+              onEdit={() => setEditing(reading)}
+              onDelete={() => handleDelete(reading)}
+            />
+          ),
+        )}
+      </ul>
+
+      {editing === 'new' && (
+        <ReadingForm
+          initial={{ startDate: todayString(), finishDate: '', rating: null, memo: '' }}
+          onSave={handleSave}
+          onCancel={() => setEditing(null)}
+        />
+      )}
+    </div>
+  )
+}

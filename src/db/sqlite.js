@@ -36,13 +36,54 @@ CREATE TABLE IF NOT EXISTS reviews (
   created_at TEXT NOT NULL,
   updated_at TEXT NOT NULL
 );
+
+CREATE TABLE IF NOT EXISTS rankings (
+  book_id INTEGER PRIMARY KEY REFERENCES books(id) ON DELETE CASCADE,
+  position INTEGER NOT NULL
+);
+
+-- 다시 읽기(2회차~). 1회차는 books의 start_date/finish_date/rating을 그대로 씁니다.
+CREATE TABLE IF NOT EXISTS readings (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  book_id INTEGER NOT NULL REFERENCES books(id) ON DELETE CASCADE,
+  start_date TEXT,
+  finish_date TEXT,
+  rating INTEGER,
+  memo TEXT,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS quotes (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  book_id INTEGER NOT NULL REFERENCES books(id) ON DELETE CASCADE,
+  content TEXT NOT NULL,
+  page INTEGER,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
 `
+
+const CHILD_TABLES = ['reviews', 'rankings', 'readings', 'quotes']
+
+/**
+ * 스키마 생성 + 고아 데이터 정리 + 외래키 활성화.
+ * sql.js(SQLite)는 외래키가 연결마다 기본 꺼져 있어서 ON DELETE CASCADE가 동작하지 않습니다.
+ * 그래서 예전 버전에서 책만 지워져 남은 하위 데이터를 먼저 지운 뒤 켭니다.
+ */
+function prepareDatabase(db) {
+  db.run(SCHEMA)
+  CHILD_TABLES.forEach((table) => {
+    db.run(`DELETE FROM ${table} WHERE book_id NOT IN (SELECT id FROM books)`)
+  })
+  db.run('PRAGMA foreign_keys = ON')
+}
 
 /** 완전히 새로운 빈 서재 DB를 메모리에 생성합니다. */
 export async function createNewDatabase() {
   const SQL = await loadSqlJs()
   const db = new SQL.Database()
-  db.run(SCHEMA)
+  prepareDatabase(db)
   return db
 }
 
@@ -50,7 +91,7 @@ export async function createNewDatabase() {
 export async function loadDatabaseFromBuffer(buffer) {
   const SQL = await loadSqlJs()
   const db = new SQL.Database(new Uint8Array(buffer))
-  db.run(SCHEMA) // 스키마가 없으면 생성, 있으면 무시(IF NOT EXISTS) — 향후 마이그레이션 지점
+  prepareDatabase(db) // 스키마가 없으면 생성(IF NOT EXISTS) — 향후 마이그레이션 지점
   return db
 }
 
@@ -143,8 +184,29 @@ export function upsertBook(db, book) {
   return id
 }
 
+/** 책을 지우면 감상문·랭킹·회차·인용구는 외래키 CASCADE로 함께 지워집니다. */
 export function deleteBook(db, id) {
   db.run('DELETE FROM books WHERE id = ?', [id])
+}
+
+/** 랭킹에 꽂힌 책 id를 순서대로 반환합니다. (1위가 맨 앞) */
+export function getRankingIds(db) {
+  return queryAll(db, 'SELECT book_id FROM rankings ORDER BY position ASC').map((r) => r.book_id)
+}
+
+/** 랭킹 전체를 주어진 순서(1위가 맨 앞)로 교체합니다. */
+export function setRankingIds(db, bookIds) {
+  db.run('BEGIN')
+  try {
+    db.run('DELETE FROM rankings')
+    bookIds.forEach((bookId, i) => {
+      db.run('INSERT INTO rankings (book_id, position) VALUES (?, ?)', [bookId, i + 1])
+    })
+    db.run('COMMIT')
+  } catch (err) {
+    db.run('ROLLBACK')
+    throw err
+  }
 }
 
 function parseReviewRow(row) {
@@ -186,6 +248,107 @@ export function upsertReview(db, review) {
   return id
 }
 
+/** 책별 감상문 개수를 { [bookId]: count } 로 반환합니다. */
+export function getReviewCounts(db) {
+  const counts = {}
+  queryAll(db, 'SELECT book_id, COUNT(*) AS c FROM reviews GROUP BY book_id').forEach((r) => {
+    counts[r.book_id] = r.c
+  })
+  return counts
+}
+
 export function deleteReview(db, id) {
   db.run('DELETE FROM reviews WHERE id = ?', [id])
+}
+
+function parseReadingRow(row) {
+  return {
+    id: row.id,
+    bookId: row.book_id,
+    startDate: row.start_date || '',
+    finishDate: row.finish_date || '',
+    rating: row.rating ?? null,
+    memo: row.memo || '',
+    createdAt: row.created_at,
+  }
+}
+
+/** 모든 책의 다시 읽기(2회차~) 기록. 책별로 시작일 순서입니다. */
+export function getReadings(db) {
+  return queryAll(
+    db,
+    "SELECT * FROM readings ORDER BY book_id, COALESCE(NULLIF(start_date, ''), '9999'), id",
+  ).map(parseReadingRow)
+}
+
+/** reading.id가 있으면 수정, 없으면 새로 추가합니다. */
+export function upsertReading(db, reading) {
+  const now = new Date().toISOString()
+  const values = [
+    reading.startDate || null,
+    reading.finishDate || null,
+    reading.rating ?? null,
+    reading.memo || null,
+  ]
+
+  if (reading.id) {
+    db.run(
+      'UPDATE readings SET start_date=?, finish_date=?, rating=?, memo=?, updated_at=? WHERE id=?',
+      [...values, now, reading.id],
+    )
+    return reading.id
+  }
+
+  db.run(
+    `INSERT INTO readings (book_id, start_date, finish_date, rating, memo, created_at, updated_at)
+     VALUES (?,?,?,?,?,?,?)`,
+    [reading.bookId, ...values, now, now],
+  )
+  const [{ id }] = queryAll(db, 'SELECT last_insert_rowid() as id')
+  return id
+}
+
+export function deleteReading(db, id) {
+  db.run('DELETE FROM readings WHERE id = ?', [id])
+}
+
+function parseQuoteRow(row) {
+  return {
+    id: row.id,
+    bookId: row.book_id,
+    content: row.content,
+    page: row.page ?? null,
+    createdAt: row.created_at,
+  }
+}
+
+/** 모든 책의 인용구. 최근에 적은 것이 먼저 옵니다. */
+export function getQuotes(db) {
+  return queryAll(db, 'SELECT * FROM quotes ORDER BY created_at DESC, id DESC').map(parseQuoteRow)
+}
+
+/** quote.id가 있으면 수정, 없으면 새로 추가합니다. */
+export function upsertQuote(db, quote) {
+  const now = new Date().toISOString()
+
+  if (quote.id) {
+    db.run('UPDATE quotes SET content=?, page=?, updated_at=? WHERE id=?', [
+      quote.content,
+      quote.page ?? null,
+      now,
+      quote.id,
+    ])
+    return quote.id
+  }
+
+  db.run(
+    'INSERT INTO quotes (book_id, content, page, created_at, updated_at) VALUES (?,?,?,?,?)',
+    [quote.bookId, quote.content, quote.page ?? null, now, now],
+  )
+  const [{ id }] = queryAll(db, 'SELECT last_insert_rowid() as id')
+  return id
+}
+
+export function deleteQuote(db, id) {
+  db.run('DELETE FROM quotes WHERE id = ?', [id])
 }

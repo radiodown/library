@@ -1,5 +1,7 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { searchBooks } from '../api/kakaoBooks'
+import { todayString } from '../utils/stats'
+import { findDuplicateBook } from '../utils/duplicates'
 
 const EMPTY_BOOK = {
   title: '',
@@ -14,19 +16,31 @@ const EMPTY_BOOK = {
 }
 
 /** 책 추가/수정 폼. book이 없으면 새 책 추가 모드입니다. */
-export default function BookForm({ book, onSave, onCancel }) {
+export default function BookForm({ book, books = [], onSave, onCancel }) {
   const [form, setForm] = useState(() => ({
     ...EMPTY_BOOK,
+    // 새 책은 시작일/완독일을 오늘로 채웁니다. 수정할 때는 저장된 값을 그대로 씁니다.
+    ...(book ? {} : { startDate: todayString(), finishDate: todayString() }),
     ...book,
     tagsText: (book?.tags || []).join(', '),
   }))
 
   const update = (patch) => setForm((prev) => ({ ...prev, ...patch }))
 
+  const duplicate = book ? null : findDuplicateBook(books, form)
+
   const [query, setQuery] = useState('')
   const [results, setResults] = useState(null) // null: 검색 전
   const [searching, setSearching] = useState(false)
   const [searchError, setSearchError] = useState('')
+  const [activeIndex, setActiveIndex] = useState(0)
+  const saveButtonRef = useRef(null)
+  const activeItemRef = useRef(null)
+
+  // 방향키로 이동한 항목이 스크롤 영역 밖이면 보이게 합니다.
+  useEffect(() => {
+    activeItemRef.current?.scrollIntoView({ block: 'nearest' })
+  }, [activeIndex, results])
 
   const handleSearch = async () => {
     if (!query.trim() || searching) return
@@ -34,6 +48,7 @@ export default function BookForm({ book, onSave, onCancel }) {
     setSearchError('')
     try {
       setResults(await searchBooks(query))
+      setActiveIndex(0)
     } catch (err) {
       setResults(null)
       setSearchError(err.message || '검색 중 오류가 발생했습니다.')
@@ -45,11 +60,40 @@ export default function BookForm({ book, onSave, onCancel }) {
   const handlePick = (r) => {
     update({ title: r.title, author: r.author, isbn: r.isbn, coverUrl: r.coverUrl })
     setResults(null)
+    // 포커스를 저장 버튼으로 옮겨, 이어서 Enter를 누르면 바로 추가되게 합니다.
+    saveButtonRef.current?.focus()
+  }
+
+  const handleSearchKeyDown = (e) => {
+    const hasResults = results && results.length > 0
+    if (e.key === 'ArrowDown' && hasResults) {
+      e.preventDefault()
+      setActiveIndex((i) => Math.min(i + 1, results.length - 1))
+    } else if (e.key === 'ArrowUp' && hasResults) {
+      e.preventDefault()
+      setActiveIndex((i) => Math.max(i - 1, 0))
+    } else if (e.key === 'Escape' && results) {
+      e.preventDefault()
+      e.stopPropagation()
+      setResults(null)
+    } else if (e.key === 'Enter') {
+      e.preventDefault()
+      if (hasResults) handlePick(results[activeIndex])
+      else handleSearch()
+    }
   }
 
   const handleSubmit = (e) => {
     e.preventDefault()
     if (!form.title.trim()) return
+    if (
+      duplicate &&
+      !window.confirm(
+        `"${duplicate.title}"이(가) 이미 서재에 있습니다. 그래도 새 책으로 추가할까요?\n(다시 읽은 책이라면 취소하고 기존 책에서 "다시 읽기"를 추가하세요.)`,
+      )
+    ) {
+      return
+    }
 
     const tags = form.tagsText
       .split(',')
@@ -73,13 +117,11 @@ export default function BookForm({ book, onSave, onCancel }) {
           <div className="book-search__bar">
             <input
               value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  e.preventDefault()
-                  handleSearch()
-                }
+              onChange={(e) => {
+                setQuery(e.target.value)
+                setResults(null) // 검색어를 고치면 이전 결과는 무효 → 다음 Enter는 새 검색
               }}
+              onKeyDown={handleSearchKeyDown}
               placeholder="도서 검색 (제목, 저자, ISBN)"
             />
             <button type="button" onClick={handleSearch} disabled={searching}>
@@ -92,16 +134,30 @@ export default function BookForm({ book, onSave, onCancel }) {
           )}
           {results && results.length > 0 && (
             <ul className="book-search__results">
-              {results.map((r) => (
-                <li key={r.id}>
-                  <button type="button" onClick={() => handlePick(r)}>
+              {results.map((r, i) => (
+                <li
+                  key={r.id}
+                  ref={i === activeIndex ? activeItemRef : null}
+                  className={i === activeIndex ? 'is-active' : ''}
+                >
+                  <button
+                    type="button"
+                    tabIndex={-1}
+                    onClick={() => handlePick(r)}
+                    onMouseEnter={() => setActiveIndex(i)}
+                  >
                     {r.coverUrl ? (
                       <img src={r.coverUrl} alt="" />
                     ) : (
                       <span className="book-search__nocover" />
                     )}
                     <span className="book-search__info">
-                      <strong>{r.title}</strong>
+                      <strong>
+                        {r.title}
+                        {findDuplicateBook(books, r) && (
+                          <span className="book-search__dup">서재에 있음</span>
+                        )}
+                      </strong>
                       <span>{r.author || '저자 미상'}</span>
                       <span>
                         {[r.publisher, r.publishedDate].filter(Boolean).join(' · ')}
@@ -113,6 +169,15 @@ export default function BookForm({ book, onSave, onCancel }) {
             </ul>
           )}
         </div>
+      )}
+
+      {duplicate && (
+        <p className="book-form__warn" role="alert">
+          ⚠ 이미 서재에 있는 책입니다: <strong>{duplicate.title}</strong>
+          {duplicate.author && ` (${duplicate.author})`}
+          <br />
+          다시 읽은 책이라면 새로 추가하지 말고, 기존 책에서 &quot;다시 읽기&quot;를 추가하세요.
+        </p>
       )}
 
       <label>
@@ -188,7 +253,9 @@ export default function BookForm({ book, onSave, onCancel }) {
       </label>
 
       <div className="book-form__actions">
-        <button type="submit">저장</button>
+        <button type="submit" ref={saveButtonRef}>
+          저장
+        </button>
         <button type="button" onClick={onCancel}>
           취소
         </button>

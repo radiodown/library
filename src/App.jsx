@@ -7,6 +7,9 @@ import Taskbar from './components/Taskbar'
 import LibraryWindow from './components/LibraryWindow'
 import ReviewQuickWindow from './components/ReviewQuickWindow'
 import ReviewEditWindow from './components/ReviewEditWindow'
+import ReviewViewWindow from './components/ReviewViewWindow'
+import RankingWindow from './components/RankingWindow'
+import StatsWindow from './components/StatsWindow'
 import './App.css'
 
 export default function App() {
@@ -25,6 +28,20 @@ export default function App() {
     return () => window.removeEventListener('beforeunload', handler)
   }, [isDirty])
 
+  // 전역 저장 단축키: Ctrl+S / ⌘S 저장, Shift를 함께 누르면 다른 이름으로 저장.
+  // 브라우저의 "페이지 저장" 대화상자는 서재가 없을 때도 항상 막습니다.
+  useEffect(() => {
+    const handler = (e) => {
+      // e.key 대신 e.code: 한글 입력 상태에서는 key가 'ㄴ'으로 들어옵니다.
+      if (!(e.ctrlKey || e.metaKey) || e.altKey || e.code !== 'KeyS') return
+      e.preventDefault()
+      if (e.repeat || !isReady) return
+      saveLibrary(e.shiftKey)
+    }
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+  }, [isReady, saveLibrary])
+
   const openLibraryWindow = () =>
     openWindow('library', {
       title: '서재',
@@ -41,6 +58,22 @@ export default function App() {
       initialSize: { width: 640, height: 520 },
     })
 
+  const openRankingWindow = () =>
+    openWindow('ranking', {
+      title: '서재 랭킹',
+      icon: '🏆',
+      initialPosition: { x: 120, y: 80 },
+      initialSize: { width: 760, height: 520 },
+    })
+
+  const openStatsWindow = () =>
+    openWindow('stats', {
+      title: '독서 통계',
+      icon: '📊',
+      initialPosition: { x: 100, y: 40 },
+      initialSize: { width: 720, height: 580 },
+    })
+
   // 서재 창의 "감상문 추가/수정"은 인라인이 아니라 별도의 뜨는 창으로 엽니다.
   const openReviewEditWindow = (book, review) => {
     const id = `review-edit-${review ? review.id : `new-${book.id}`}`
@@ -53,6 +86,21 @@ export default function App() {
       bookId: book.id,
       bookTitle: book.title,
       review: review || null,
+    })
+  }
+
+  // 감상문마다 고유한 id의 창으로 열어서, 여러 감상문을 동시에 띄워 놓고 볼 수 있습니다.
+  // 이미 열려 있으면 새로 만들지 않고 그 창을 앞으로 가져옵니다.
+  const openReviewViewWindow = (book, review) => {
+    const cascade = (windows.length % 8) * 24
+    openWindow(`review-view-${review.id}`, {
+      title: `감상문 보기 — ${book.title}`,
+      icon: '📖',
+      initialPosition: { x: 180 + cascade, y: 90 + cascade },
+      initialSize: { width: 560, height: 480 },
+      bookId: book.id,
+      bookTitle: book.title,
+      reviewId: review.id,
     })
   }
 
@@ -71,9 +119,22 @@ export default function App() {
     if (w.minimized) focusWindow(id)
   }
 
+  const startMenuItems = [
+    { icon: '📚', label: '서재', onClick: openLibraryWindow },
+    { icon: '📝', label: '감상문 작성', onClick: openReviewWindow },
+    { icon: '🏆', label: '서재 랭킹', onClick: openRankingWindow },
+    { icon: '📊', label: '독서 통계', onClick: openStatsWindow },
+    { separator: true },
+    { icon: '🆕', label: '새 서재 만들기', onClick: libraryDb.newLibrary },
+    { icon: '📂', label: '서재 불러오기', onClick: openLibrary },
+    { icon: '💾', label: '서재 저장', onClick: handleSaveIcon },
+  ]
+
   const renderWindowContent = (w) => {
     if (w.id === 'library') {
-      return <LibraryWindow {...libraryDb} onOpenReviewWindow={openReviewEditWindow} />
+      return <LibraryWindow {...libraryDb} onOpenReviewWindow={openReviewEditWindow}
+          onViewReview={openReviewViewWindow}
+        />
     }
     if (w.id === 'review') {
       return (
@@ -82,6 +143,40 @@ export default function App() {
           addOrUpdateBook={libraryDb.addOrUpdateBook}
           saveReview={libraryDb.saveReview}
           onOpenLibrary={openLibraryWindow}
+        />
+      )
+    }
+    if (w.id === 'stats') {
+      return (
+        <StatsWindow
+          isReady={libraryDb.isReady}
+          books={libraryDb.books}
+          readings={libraryDb.readings}
+          getReviewCounts={libraryDb.getReviewCounts}
+          reviewsVersion={libraryDb.reviewsVersion}
+          onWriteReview={(book) => openReviewEditWindow(book, null)}
+          onOpenLibrary={openLibraryWindow}
+        />
+      )
+    }
+    if (w.id === 'ranking') {
+      return (
+        <RankingWindow
+          isReady={libraryDb.isReady}
+          books={libraryDb.books}
+          rankingIds={libraryDb.rankingIds}
+          saveRanking={libraryDb.saveRanking}
+          onOpenLibrary={openLibraryWindow}
+        />
+      )
+    }
+    if (w.id.startsWith('review-view-')) {
+      const review = libraryDb.listReviews(w.bookId).find((r) => r.id === w.reviewId) || null
+      return (
+        <ReviewViewWindow
+          bookTitle={w.bookTitle}
+          review={review}
+          onEdit={() => openReviewEditWindow({ id: w.bookId, title: w.bookTitle }, review)}
         />
       )
     }
@@ -125,7 +220,7 @@ export default function App() {
         </Window>
       ))}
 
-      <Taskbar windows={windows} onToggle={handleToggleFromTaskbar} />
+      <Taskbar windows={windows} onToggle={handleToggleFromTaskbar} menuItems={startMenuItems} />
     </div>
   )
 }
