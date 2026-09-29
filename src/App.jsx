@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import { useLibraryDb } from './hooks/useLibraryDb'
 import { useWindowManager } from './hooks/useWindowManager'
 import DesktopIcon from './components/DesktopIcon'
@@ -10,6 +10,7 @@ import ReviewEditWindow from './components/ReviewEditWindow'
 import ReviewViewWindow from './components/ReviewViewWindow'
 import RankingWindow from './components/RankingWindow'
 import StatsWindow from './components/StatsWindow'
+import QuoteOfDayWindow from './components/QuoteOfDayWindow'
 import './App.css'
 
 export default function App() {
@@ -65,6 +66,23 @@ export default function App() {
       initialPosition: { x: 120, y: 80 },
       initialSize: { width: 760, height: 520 },
     })
+
+  const openQuoteOfDayWindow = () =>
+    openWindow('quote-of-day', {
+      title: '오늘의 인용구',
+      icon: '💬',
+      initialPosition: { x: 240, y: 130 },
+      initialSize: { width: 440, height: 280 },
+    })
+
+  // Windows 98의 "오늘의 팁"처럼, 서재를 처음 열었을 때 인용구가 있으면 한 번 보여 줍니다.
+  const quoteShownRef = useRef(false)
+  useEffect(() => {
+    if (!isReady || quoteShownRef.current) return
+    quoteShownRef.current = true
+    if (libraryDb.quotes.length > 0) openQuoteOfDayWindow()
+    // 서재가 준비된 순간에만 판단하면 되므로 isReady만 의존합니다.
+  }, [isReady])
 
   const openStatsWindow = () =>
     openWindow('stats', {
@@ -124,6 +142,7 @@ export default function App() {
     { icon: '📝', label: '감상문 작성', onClick: openReviewWindow },
     { icon: '🏆', label: '서재 랭킹', onClick: openRankingWindow },
     { icon: '📊', label: '독서 통계', onClick: openStatsWindow },
+    { icon: '💬', label: '오늘의 인용구', onClick: openQuoteOfDayWindow },
     { separator: true },
     { icon: '🆕', label: '새 서재 만들기', onClick: libraryDb.newLibrary },
     { icon: '📂', label: '서재 불러오기', onClick: openLibrary },
@@ -142,6 +161,16 @@ export default function App() {
           isReady={libraryDb.isReady}
           addOrUpdateBook={libraryDb.addOrUpdateBook}
           saveReview={libraryDb.saveReview}
+          onOpenLibrary={openLibraryWindow}
+        />
+      )
+    }
+    if (w.id === 'quote-of-day') {
+      return (
+        <QuoteOfDayWindow
+          isReady={libraryDb.isReady}
+          books={libraryDb.books}
+          quotes={libraryDb.quotes}
           onOpenLibrary={openLibraryWindow}
         />
       )

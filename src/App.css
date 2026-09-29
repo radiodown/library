@@ -602,6 +602,51 @@
   font-size: 12px;
 }
 
+/* ====== 오늘의 인용구 ====== */
+.quote-day {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  height: 100%;
+}
+
+.quote-day--empty {
+  align-items: flex-start;
+}
+
+.quote-day__label {
+  margin: 0;
+  font-weight: bold;
+}
+
+.quote-day__text {
+  flex: 1;
+  margin: 0;
+  padding: 8px 12px;
+  overflow-y: auto;
+  border: 2px inset var(--win-face);
+  border-left: 4px solid var(--win-title-start);
+  background: var(--win-light);
+  font-size: 15px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+}
+
+.quote-day__source {
+  margin: 0;
+  text-align: right;
+}
+
+.quote-day__actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.quote-day__count {
+  color: var(--win-text-muted);
+}
+
 /* ====== 독서 통계 ====== */
 .stats {
   display: flex;
