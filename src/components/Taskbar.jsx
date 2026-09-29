@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import PixelIcon from './PixelIcon'
 
 /** 시작 버튼용 4색 깃발 로고 (인라인 SVG, 16x16). */
 function StartLogo() {
@@ -69,7 +70,9 @@ export default function Taskbar({ windows, onToggle, menuItems = [] }) {
                       item.onClick()
                     }}
                   >
-                    <span className="start-menu__icon">{item.icon}</span>
+                    <span className="start-menu__icon">
+                      <PixelIcon name={item.icon} size={32} />
+                    </span>
                     {item.label}
                   </button>
                 </li>
@@ -91,14 +94,16 @@ export default function Taskbar({ windows, onToggle, menuItems = [] }) {
       </div>
 
       <div className="taskbar__items">
-        {windows.map((w) => (
+        {windows
+          .filter((w) => !w.dialog) // 알림창은 작업표시줄에 나타나지 않습니다
+          .map((w) => (
           <button
             key={w.id}
             type="button"
             className={`taskbar__item${!w.minimized ? ' is-active' : ''}`}
             onClick={() => onToggle(w.id)}
           >
-            <span>{w.icon}</span> {w.title}
+            <PixelIcon name={w.icon} /> <span className="taskbar__title">{w.title}</span>
           </button>
         ))}
       </div>

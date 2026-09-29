@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
+import PixelIcon from './PixelIcon'
 
 /** 데스크탑 위 아이콘. 한 번 클릭하면 선택(강조), 더블클릭하면 실행됩니다. */
-export default function DesktopIcon({ icon, label, onActivate }) {
+export default function DesktopIcon({ icon, label, onActivate, tapToOpen = false }) {
   const [selected, setSelected] = useState(false)
   const ref = useRef(null)
 
@@ -21,14 +22,20 @@ export default function DesktopIcon({ icon, label, onActivate }) {
       ref={ref}
       type="button"
       className={`desktop-icon${selected ? ' is-selected' : ''}`}
-      onClick={() => setSelected(true)}
-      onDoubleClick={() => {
-        setSelected(true)
-        onActivate()
-      }}
+      onClick={() => (tapToOpen ? onActivate() : setSelected(true))}
+      onDoubleClick={
+        tapToOpen
+          ? undefined
+          : () => {
+              setSelected(true)
+              onActivate()
+            }
+      }
       onBlur={() => setSelected(false)}
     >
-      <span className="desktop-icon__glyph">{icon}</span>
+      <span className="desktop-icon__glyph">
+        <PixelIcon name={icon} size={32} />
+      </span>
       <span className="desktop-icon__label">{label}</span>
     </button>
   )

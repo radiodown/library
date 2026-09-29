@@ -25,7 +25,8 @@ CREATE TABLE IF NOT EXISTS books (
   rating INTEGER,
   tags TEXT,
   created_at TEXT NOT NULL,
-  updated_at TEXT NOT NULL
+  updated_at TEXT NOT NULL,
+  deleted_at TEXT -- 값이 있으면 휴지통에 있는 책
 );
 
 CREATE TABLE IF NOT EXISTS reviews (
@@ -73,6 +74,9 @@ const CHILD_TABLES = ['reviews', 'rankings', 'readings', 'quotes']
  */
 function prepareDatabase(db) {
   db.run(SCHEMA)
+  // 휴지통 기능 이전에 만든 파일에는 deleted_at 컬럼이 없으므로 추가합니다. (CREATE IF NOT EXISTS로는 안 붙음)
+  const bookColumns = queryAll(db, 'PRAGMA table_info(books)').map((c) => c.name)
+  if (!bookColumns.includes('deleted_at')) db.run('ALTER TABLE books ADD COLUMN deleted_at TEXT')
   CHILD_TABLES.forEach((table) => {
     db.run(`DELETE FROM ${table} WHERE book_id NOT IN (SELECT id FROM books)`)
   })
@@ -128,8 +132,32 @@ function parseBookRow(row) {
   }
 }
 
+/** 휴지통에 있지 않은 책만 반환합니다. */
 export function getBooks(db) {
-  return queryAll(db, 'SELECT * FROM books ORDER BY updated_at DESC').map(parseBookRow)
+  return queryAll(db, 'SELECT * FROM books WHERE deleted_at IS NULL ORDER BY updated_at DESC').map(
+    parseBookRow,
+  )
+}
+
+/** 휴지통에 있는 책. 최근에 버린 것이 먼저 옵니다. */
+export function getTrashedBooks(db) {
+  return queryAll(db, 'SELECT * FROM books WHERE deleted_at IS NOT NULL ORDER BY deleted_at DESC').map(
+    (row) => ({ ...parseBookRow(row), deletedAt: row.deleted_at }),
+  )
+}
+
+/** 책을 휴지통으로 보냅니다. 감상문/회차/인용구는 그대로 두므로 복원하면 모두 돌아옵니다. */
+export function trashBook(db, id) {
+  db.run('UPDATE books SET deleted_at = ? WHERE id = ?', [new Date().toISOString(), id])
+}
+
+export function restoreBook(db, id) {
+  db.run('UPDATE books SET deleted_at = NULL WHERE id = ?', [id])
+}
+
+/** 휴지통을 비웁니다. 딸린 데이터는 외래키 CASCADE로 함께 지워집니다. */
+export function emptyTrash(db) {
+  db.run('DELETE FROM books WHERE deleted_at IS NOT NULL')
 }
 
 export function getBook(db, id) {
@@ -184,21 +212,26 @@ export function upsertBook(db, book) {
   return id
 }
 
-/** 책을 지우면 감상문·랭킹·회차·인용구는 외래키 CASCADE로 함께 지워집니다. */
+/** 책을 완전히 지웁니다(휴지통에서 영구 삭제). 감상문·랭킹·회차·인용구는 외래키 CASCADE로 함께 지워집니다. */
 export function deleteBook(db, id) {
   db.run('DELETE FROM books WHERE id = ?', [id])
 }
 
 /** 랭킹에 꽂힌 책 id를 순서대로 반환합니다. (1위가 맨 앞) */
 export function getRankingIds(db) {
-  return queryAll(db, 'SELECT book_id FROM rankings ORDER BY position ASC').map((r) => r.book_id)
+  return queryAll(
+    db,
+    `SELECT r.book_id FROM rankings r JOIN books b ON b.id = r.book_id
+     WHERE b.deleted_at IS NULL ORDER BY r.position ASC`,
+  ).map((r) => r.book_id)
 }
 
 /** 랭킹 전체를 주어진 순서(1위가 맨 앞)로 교체합니다. */
 export function setRankingIds(db, bookIds) {
   db.run('BEGIN')
   try {
-    db.run('DELETE FROM rankings')
+    // 휴지통에 있는 책의 순위는 남겨 둬야 복원했을 때 대략 원래 자리로 돌아옵니다.
+    db.run('DELETE FROM rankings WHERE book_id IN (SELECT id FROM books WHERE deleted_at IS NULL)')
     bookIds.forEach((bookId, i) => {
       db.run('INSERT INTO rankings (book_id, position) VALUES (?, ?)', [bookId, i + 1])
     })
@@ -277,7 +310,8 @@ function parseReadingRow(row) {
 export function getReadings(db) {
   return queryAll(
     db,
-    "SELECT * FROM readings ORDER BY book_id, COALESCE(NULLIF(start_date, ''), '9999'), id",
+    `SELECT * FROM readings WHERE book_id IN (SELECT id FROM books WHERE deleted_at IS NULL)
+     ORDER BY book_id, COALESCE(NULLIF(start_date, ''), '9999'), id`,
   ).map(parseReadingRow)
 }
 
@@ -324,7 +358,11 @@ function parseQuoteRow(row) {
 
 /** 모든 책의 인용구. 최근에 적은 것이 먼저 옵니다. */
 export function getQuotes(db) {
-  return queryAll(db, 'SELECT * FROM quotes ORDER BY created_at DESC, id DESC').map(parseQuoteRow)
+  return queryAll(
+    db,
+    `SELECT * FROM quotes WHERE book_id IN (SELECT id FROM books WHERE deleted_at IS NULL)
+     ORDER BY created_at DESC, id DESC`,
+  ).map(parseQuoteRow)
 }
 
 /** quote.id가 있으면 수정, 없으면 새로 추가합니다. */

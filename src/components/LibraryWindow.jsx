@@ -3,6 +3,7 @@ import DataManager from './DataManager'
 import BookList from './BookList'
 import BookDetail from './BookDetail'
 import BookForm from './BookForm'
+import PixelIcon from './PixelIcon'
 
 /** "서재" 창의 내용: DB 파일 관리 툴바 + 책 목록/상세/감상문. */
 export default function LibraryWindow({
@@ -49,7 +50,7 @@ export default function LibraryWindow({
 
   const handleDeleteBook = () => {
     if (!selectedBook) return
-    if (!window.confirm(`"${selectedBook.title}"을(를) 삭제할까요? 감상문, 회차, 인용구도 함께 삭제됩니다.`)) return
+    if (!window.confirm(`"${selectedBook.title}"을(를) 휴지통으로 보낼까요? 감상문, 회차, 인용구도 함께 옮겨지며 휴지통에서 복원할 수 있습니다.`)) return
     removeBook(selectedBook.id)
     setSelectedBookId(null)
   }
@@ -69,7 +70,12 @@ export default function LibraryWindow({
           onOpen={openLibrary}
           onSave={saveLibrary}
         />
-        {error && <p className="app__error">⚠ {error}</p>}
+        {error && (
+          <p className="app__error">
+            <PixelIcon name="warning" className="pixel-icon--inline" />
+            {error}
+          </p>
+        )}
       </header>
 
       <div className="construction-bar" role="presentation" />

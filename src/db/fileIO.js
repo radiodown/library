@@ -30,7 +30,10 @@ export async function openDbFile() {
   return new Promise((resolve, reject) => {
     const input = document.createElement('input')
     input.type = 'file'
-    input.accept = '.db,.sqlite'
+    // 터치 기기(iOS 등)는 알 수 없는 확장자를 accept로 거르면 .db 파일이 선택 불가로 보일 수 있어 필터를 뺍니다.
+    if (!window.matchMedia('(pointer: coarse)').matches) input.accept = '.db,.sqlite'
+    // 선택창을 취소하면 change가 오지 않아 busy 상태가 풀리지 않으므로 cancel도 처리합니다.
+    input.addEventListener('cancel', () => reject(new DOMException('canceled', 'AbortError')))
     input.onchange = async () => {
       const file = input.files?.[0]
       if (!file) {

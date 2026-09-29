@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { searchBooks } from '../api/kakaoBooks'
 import { todayString } from '../utils/stats'
 import { findDuplicateBook } from '../utils/duplicates'
+import PixelIcon from './PixelIcon'
 
 const EMPTY_BOOK = {
   title: '',
@@ -173,7 +174,8 @@ export default function BookForm({ book, books = [], onSave, onCancel }) {
 
       {duplicate && (
         <p className="book-form__warn" role="alert">
-          ⚠ 이미 서재에 있는 책입니다: <strong>{duplicate.title}</strong>
+          <PixelIcon name="warning" className="pixel-icon--inline" />
+          이미 서재에 있는 책입니다: <strong>{duplicate.title}</strong>
           {duplicate.author && ` (${duplicate.author})`}
           <br />
           다시 읽은 책이라면 새로 추가하지 말고, 기존 책에서 &quot;다시 읽기&quot;를 추가하세요.

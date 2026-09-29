@@ -53,7 +53,7 @@ function QuoteForm({ initial, onSave, onCancel }) {
 }
 
 /** 책에 딸린 인용구(좋았던 문장) 목록. 감상문과 별개로 문장 단위로 쌓아 둡니다. */
-export default function QuoteList({ book, quotes, saveQuote, removeQuote }) {
+export default function QuoteList({ readOnly = false, book, quotes, saveQuote, removeQuote }) {
   const [editing, setEditing] = useState(null) // null | 'new' | quote object
 
   const handleSave = (form) => {
@@ -66,13 +66,17 @@ export default function QuoteList({ book, quotes, saveQuote, removeQuote }) {
     removeQuote(quote.id)
   }
 
+  if (readOnly && quotes.length === 0) return null
+
   return (
     <div className="book-detail__section">
       <div className="book-detail__section-header">
         <h3>인용구 ({quotes.length})</h3>
-        <button type="button" onClick={() => setEditing('new')} disabled={editing !== null}>
-          + 인용구 추가
-        </button>
+        {!readOnly && (
+          <button type="button" onClick={() => setEditing('new')} disabled={editing !== null}>
+            + 인용구 추가
+          </button>
+        )}
       </div>
 
       {editing === 'new' && (
@@ -102,14 +106,16 @@ export default function QuoteList({ book, quotes, saveQuote, removeQuote }) {
               <blockquote>{quote.content}</blockquote>
               <div className="quote-list__meta">
                 {quote.page != null && <span>p.{quote.page}</span>}
-                <span className="quote-list__actions">
-                  <button type="button" onClick={() => setEditing(quote)}>
-                    수정
-                  </button>
-                  <button type="button" className="danger" onClick={() => handleDelete(quote)}>
-                    삭제
-                  </button>
-                </span>
+                {!readOnly && (
+                  <span className="quote-list__actions">
+                    <button type="button" onClick={() => setEditing(quote)}>
+                      수정
+                    </button>
+                    <button type="button" className="danger" onClick={() => handleDelete(quote)}>
+                      삭제
+                    </button>
+                  </span>
+                )}
               </div>
             </li>
           ),

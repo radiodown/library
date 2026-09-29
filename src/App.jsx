@@ -1,6 +1,7 @@
-import { useEffect, useRef } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useLibraryDb } from './hooks/useLibraryDb'
 import { useWindowManager } from './hooks/useWindowManager'
+import { useIsMobile } from './hooks/useMediaQuery'
 import DesktopIcon from './components/DesktopIcon'
 import Window from './components/Window'
 import Taskbar from './components/Taskbar'
@@ -11,12 +12,49 @@ import ReviewViewWindow from './components/ReviewViewWindow'
 import RankingWindow from './components/RankingWindow'
 import StatsWindow from './components/StatsWindow'
 import QuoteOfDayWindow from './components/QuoteOfDayWindow'
+import MobileLibrary from './components/MobileLibrary'
+import MobileRanking from './components/MobileRanking'
+import MobileOpenPrompt from './components/MobileOpenPrompt'
+import TrashWindow from './components/TrashWindow'
+import PowerScreen from './components/PowerScreen'
+import ShutdownDialog from './components/ShutdownDialog'
 import './App.css'
+import './mobile.css' // App.css 뒤에 불러와야 모바일 덮어쓰기가 우선합니다
+
+// 부팅 화면은 탭(세션)마다 처음 한 번만 보여 줍니다. 새로고침에는 다시 나오지 않습니다.
+const BOOT_KEY = 'library98-booted'
 
 export default function App() {
-  const libraryDb = useLibraryDb()
+  const isMobile = useIsMobile()
+  // 모바일은 파일을 조용히 다시 열 수 없어서, 연 서재의 사본을 브라우저에 보관해 다음에 바로 열게 합니다.
+  const libraryDb = useLibraryDb({ rememberLast: isMobile })
   const { isReady, isDirty, saveLibrary, openLibrary } = libraryDb
-  const { windows, openWindow, closeWindow, focusWindow, toggleMinimize } = useWindowManager()
+  const { windows, openWindow, closeWindow, closeAll, focusWindow, toggleMinimize } =
+    useWindowManager()
+
+  // 전원 상태: 'booting'(시작 화면) → 'on' → 'shuttingDown' → 'off'(꺼진 화면) → 다시 'booting'
+  const [power, setPower] = useState(() => {
+    try {
+      return sessionStorage.getItem(BOOT_KEY) ? 'on' : 'booting'
+    } catch {
+      return 'booting'
+    }
+  })
+  const restartRef = useRef(false)
+  // PowerScreen의 타이머/리스너가 매 렌더마다 다시 만들어지지 않도록 콜백을 고정합니다.
+  const handleBooted = useCallback(() => {
+    try {
+      sessionStorage.setItem(BOOT_KEY, '1')
+    } catch {
+      // 저장소를 못 써도 부팅 화면만 다음에 또 나올 뿐입니다.
+    }
+    setPower('on')
+  }, [])
+  const handleShutdownDone = useCallback(
+    () => setPower(restartRef.current ? 'booting' : 'off'),
+    [],
+  )
+  const handleWake = useCallback(() => setPower('booting'), [])
 
   // 저장하지 않은 변경사항이 있는 채로 탭을 닫으면 경고
   useEffect(() => {
@@ -46,15 +84,55 @@ export default function App() {
   const openLibraryWindow = () =>
     openWindow('library', {
       title: '서재',
-      icon: '📚',
+      icon: 'library',
       initialPosition: { x: 70, y: 50 },
       initialSize: { width: 920, height: 560 },
     })
 
+  // 랭킹/인용구 창에서 책을 누르면 서재 창을 열고 그 책으로 이동시킵니다. (모바일)
+  const openLibraryAtBook = (bookId) =>
+    openWindow('library', {
+      title: '서재',
+      icon: 'library',
+      initialPosition: { x: 70, y: 50 },
+      initialSize: { width: 920, height: 560 },
+      focus: { bookId, nonce: Date.now() },
+    })
+
+  const openTrashWindow = () =>
+    openWindow('trash', {
+      title: '휴지통',
+      icon: 'trash',
+      initialPosition: { x: 140, y: 90 },
+      initialSize: { width: 560, height: 420 },
+    })
+
+  // 종료 대화상자: Windows 98 알림창처럼 작은 팝업을 가운데쯤에 띄웁니다.
+  const openShutdownDialog = () => {
+    const width = Math.min(380, window.innerWidth - 24)
+    openWindow('shutdown', {
+      title: '서재 종료',
+      icon: 'computer',
+      dialog: true,
+      initialPosition: {
+        x: Math.max(12, (window.innerWidth - width) / 2),
+        y: Math.max(24, window.innerHeight / 2 - 130),
+      },
+      initialSize: { width, height: 0 },
+    })
+  }
+
+  // 종료/다시 시작: 열려 있던 창을 모두 닫고 화면을 덮습니다. 서재 데이터는 메모리에 그대로 남습니다.
+  const handleShutdown = (mode) => {
+    restartRef.current = mode === 'restart'
+    closeAll()
+    setPower('shuttingDown')
+  }
+
   const openReviewWindow = () =>
     openWindow('review', {
       title: '감상문 작성',
-      icon: '📝',
+      icon: 'notepad',
       initialPosition: { x: 160, y: 120 },
       initialSize: { width: 640, height: 520 },
     })
@@ -62,18 +140,25 @@ export default function App() {
   const openRankingWindow = () =>
     openWindow('ranking', {
       title: '서재 랭킹',
-      icon: '🏆',
+      icon: 'trophy',
       initialPosition: { x: 120, y: 80 },
       initialSize: { width: 760, height: 520 },
     })
 
-  const openQuoteOfDayWindow = () =>
+  // Windows 98 알림창처럼 작은 팝업을 화면 가운데쯤에 띄웁니다. PC와 모바일 모두 같습니다.
+  const openQuoteOfDayWindow = () => {
+    const width = Math.min(420, window.innerWidth - 24)
     openWindow('quote-of-day', {
       title: '오늘의 인용구',
-      icon: '💬',
-      initialPosition: { x: 240, y: 130 },
-      initialSize: { width: 440, height: 280 },
+      icon: 'quote',
+      dialog: true,
+      initialPosition: {
+        x: Math.max(12, (window.innerWidth - width) / 2),
+        y: Math.max(24, window.innerHeight / 2 - 150),
+      },
+      initialSize: { width, height: 0 }, // 대화상자는 높이를 내용에 맞추므로 폭만 씁니다
     })
+  }
 
   // Windows 98의 "오늘의 팁"처럼, 서재를 처음 열었을 때 인용구가 있으면 한 번 보여 줍니다.
   const quoteShownRef = useRef(false)
@@ -87,7 +172,7 @@ export default function App() {
   const openStatsWindow = () =>
     openWindow('stats', {
       title: '독서 통계',
-      icon: '📊',
+      icon: 'chart',
       initialPosition: { x: 100, y: 40 },
       initialSize: { width: 720, height: 580 },
     })
@@ -98,7 +183,7 @@ export default function App() {
     const cascade = windows.length * 20
     openWindow(id, {
       title: `감상문 — ${book.title}`,
-      icon: '📝',
+      icon: 'notepad',
       initialPosition: { x: 200 + cascade, y: 140 + cascade },
       initialSize: { width: 640, height: 520 },
       bookId: book.id,
@@ -113,7 +198,7 @@ export default function App() {
     const cascade = (windows.length % 8) * 24
     openWindow(`review-view-${review.id}`, {
       title: `감상문 보기 — ${book.title}`,
-      icon: '📖',
+      icon: 'book-open',
       initialPosition: { x: 180 + cascade, y: 90 + cascade },
       initialSize: { width: 560, height: 480 },
       bookId: book.id,
@@ -138,18 +223,91 @@ export default function App() {
   }
 
   const startMenuItems = [
-    { icon: '📚', label: '서재', onClick: openLibraryWindow },
-    { icon: '📝', label: '감상문 작성', onClick: openReviewWindow },
-    { icon: '🏆', label: '서재 랭킹', onClick: openRankingWindow },
-    { icon: '📊', label: '독서 통계', onClick: openStatsWindow },
-    { icon: '💬', label: '오늘의 인용구', onClick: openQuoteOfDayWindow },
+    { icon: 'library', label: '서재', onClick: openLibraryWindow },
+    { icon: 'notepad', label: '감상문 작성', onClick: openReviewWindow },
+    { icon: 'trophy', label: '서재 랭킹', onClick: openRankingWindow },
+    { icon: 'chart', label: '독서 통계', onClick: openStatsWindow },
+    { icon: 'quote', label: '오늘의 인용구', onClick: openQuoteOfDayWindow },
     { separator: true },
-    { icon: '🆕', label: '새 서재 만들기', onClick: libraryDb.newLibrary },
-    { icon: '📂', label: '서재 불러오기', onClick: openLibrary },
-    { icon: '💾', label: '서재 저장', onClick: handleSaveIcon },
+    { icon: 'document-new', label: '새 서재 만들기', onClick: libraryDb.newLibrary },
+    { icon: 'folder-open', label: '서재 불러오기', onClick: openLibrary },
+    { icon: 'floppy', label: '서재 저장', onClick: handleSaveIcon },
+    { separator: true },
+    { icon: 'computer', label: '시스템 종료...', onClick: openShutdownDialog },
   ]
 
+  // 모바일: 서재/랭킹/통계/인용구 창은 읽기 전용 화면으로 보여 줍니다.
+  const mobileMenuItems = [
+    { icon: 'library', label: '서재', onClick: openLibraryWindow },
+    { icon: 'trophy', label: '서재 랭킹', onClick: openRankingWindow },
+    { icon: 'chart', label: '독서 통계', onClick: openStatsWindow },
+    { icon: 'quote', label: '오늘의 인용구', onClick: openQuoteOfDayWindow },
+    { separator: true },
+    { icon: 'folder-open', label: '서재 파일 열기', onClick: openLibrary },
+    ...(libraryDb.lastLibrary
+      ? [{ icon: 'book-open', label: '마지막 서재 불러오기', onClick: libraryDb.restoreLastLibrary }]
+      : []),
+    { separator: true },
+    { icon: 'computer', label: '시스템 종료...', onClick: openShutdownDialog },
+  ]
+
+  const renderMobileContent = (w) => {
+    if (!['library', 'ranking', 'stats'].includes(w.id)) return undefined
+
+    if (!libraryDb.isReady) {
+      return (
+        <div className="m-content">
+          <MobileOpenPrompt
+            busy={libraryDb.busy}
+            error={libraryDb.error}
+            lastLibrary={libraryDb.lastLibrary}
+            openLibrary={openLibrary}
+            restoreLastLibrary={libraryDb.restoreLastLibrary}
+          />
+        </div>
+      )
+    }
+
+    let content = null
+    if (w.id === 'library') {
+      content = (
+        <MobileLibrary
+          books={libraryDb.books}
+          readings={libraryDb.readings}
+          quotes={libraryDb.quotes}
+          listReviews={libraryDb.listReviews}
+          focus={w.focus}
+          onViewReview={openReviewViewWindow}
+        />
+      )
+    } else if (w.id === 'ranking') {
+      content = (
+        <MobileRanking
+          books={libraryDb.books}
+          rankingIds={libraryDb.rankingIds}
+          onOpenBook={openLibraryAtBook}
+        />
+      )
+    } else if (w.id === 'stats') {
+      content = (
+        <StatsWindow
+          isReady
+          books={libraryDb.books}
+          readings={libraryDb.readings}
+          getReviewCounts={libraryDb.getReviewCounts}
+          reviewsVersion={libraryDb.reviewsVersion}
+        />
+      )
+    }
+    return <div className="m-content">{content}</div>
+  }
+
   const renderWindowContent = (w) => {
+    if (isMobile) {
+      const mobileContent = renderMobileContent(w)
+      if (mobileContent !== undefined) return mobileContent
+    }
+
     if (w.id === 'library') {
       return <LibraryWindow {...libraryDb} onOpenReviewWindow={openReviewEditWindow}
           onViewReview={openReviewViewWindow}
@@ -165,13 +323,37 @@ export default function App() {
         />
       )
     }
+    if (w.id === 'shutdown') {
+      return (
+        <ShutdownDialog
+          isDirty={isDirty}
+          busy={libraryDb.busy}
+          onSave={() => saveLibrary(false)}
+          onConfirm={handleShutdown}
+          onCancel={() => closeWindow(w.id)}
+        />
+      )
+    }
+    if (w.id === 'trash') {
+      return (
+        <TrashWindow
+          isReady={libraryDb.isReady}
+          trashedBooks={libraryDb.trashedBooks}
+          restoreBook={libraryDb.restoreBook}
+          purgeBook={libraryDb.purgeBook}
+          emptyTrash={libraryDb.emptyTrash}
+          onOpenLibrary={openLibraryWindow}
+        />
+      )
+    }
     if (w.id === 'quote-of-day') {
       return (
         <QuoteOfDayWindow
           isReady={libraryDb.isReady}
           books={libraryDb.books}
           quotes={libraryDb.quotes}
-          onOpenLibrary={openLibraryWindow}
+          onOpenLibrary={isMobile ? openLibrary : openLibraryWindow}
+          onClose={() => closeWindow(w.id)}
         />
       )
     }
@@ -201,13 +383,18 @@ export default function App() {
     }
     if (w.id.startsWith('review-view-')) {
       const review = libraryDb.listReviews(w.bookId).find((r) => r.id === w.reviewId) || null
-      return (
+      const view = (
         <ReviewViewWindow
           bookTitle={w.bookTitle}
           review={review}
-          onEdit={() => openReviewEditWindow({ id: w.bookId, title: w.bookTitle }, review)}
+          onEdit={
+            isMobile
+              ? undefined // 모바일은 읽기 전용
+              : () => openReviewEditWindow({ id: w.bookId, title: w.bookTitle }, review)
+          }
         />
       )
+      return isMobile ? <div className="m-content m-reader">{view}</div> : view
     }
     if (w.id.startsWith('review-edit-')) {
       return (
@@ -224,12 +411,40 @@ export default function App() {
   }
 
   return (
-    <div className="desktop">
+    <>
+    {/* 부팅/종료 화면이 덮여 있는 동안 뒤의 바탕화면은 키보드/스크린리더로도 조작되지 않게 합니다. */}
+    <div className={`desktop${isMobile ? ' is-mobile' : ''}`} inert={power !== 'on'}>
       <div className="desktop__icons">
-        <DesktopIcon icon="💾" label="서재 저장" onActivate={handleSaveIcon} />
-        <DesktopIcon icon="📂" label="서재 불러오기" onActivate={openLibrary} />
-        <DesktopIcon icon="📚" label="서재" onActivate={openLibraryWindow} />
-        <DesktopIcon icon="📝" label="감상문" onActivate={openReviewWindow} />
+        {isMobile ? (
+          // 모바일: 한 번 탭으로 실행하고, 읽기 위주의 아이콘만 둡니다.
+          <>
+            {!isReady && libraryDb.lastLibrary && (
+              <DesktopIcon
+                icon="book-open"
+                label="마지막 서재"
+                onActivate={libraryDb.restoreLastLibrary}
+                tapToOpen
+              />
+            )}
+            <DesktopIcon icon="folder-open" label="서재 열기" onActivate={openLibrary} tapToOpen />
+            <DesktopIcon icon="library" label="서재" onActivate={openLibraryWindow} tapToOpen />
+            <DesktopIcon icon="trophy" label="랭킹" onActivate={openRankingWindow} tapToOpen />
+            <DesktopIcon icon="chart" label="통계" onActivate={openStatsWindow} tapToOpen />
+            <DesktopIcon icon="quote" label="인용구" onActivate={openQuoteOfDayWindow} tapToOpen />
+          </>
+        ) : (
+          <>
+            <DesktopIcon icon="floppy" label="서재 저장" onActivate={handleSaveIcon} />
+            <DesktopIcon icon="folder-open" label="서재 불러오기" onActivate={openLibrary} />
+            <DesktopIcon icon="library" label="서재" onActivate={openLibraryWindow} />
+            <DesktopIcon icon="notepad" label="감상문" onActivate={openReviewWindow} />
+            <DesktopIcon
+              icon={libraryDb.trashedBooks.length ? 'trash-full' : 'trash'}
+              label={libraryDb.trashedBooks.length ? `휴지통 (${libraryDb.trashedBooks.length})` : '휴지통'}
+              onActivate={openTrashWindow}
+            />
+          </>
+        )}
       </div>
 
       {windows.map((w) => (
@@ -241,6 +456,8 @@ export default function App() {
           initialPosition={w.initialPosition}
           initialSize={w.initialSize}
           minimized={w.minimized}
+          maximized={isMobile}
+          dialog={w.dialog}
           onClose={() => closeWindow(w.id)}
           onMinimize={() => toggleMinimize(w.id)}
           onFocus={() => focusWindow(w.id)}
@@ -249,7 +466,17 @@ export default function App() {
         </Window>
       ))}
 
-      <Taskbar windows={windows} onToggle={handleToggleFromTaskbar} menuItems={startMenuItems} />
+      <Taskbar windows={windows} onToggle={handleToggleFromTaskbar} menuItems={isMobile ? mobileMenuItems : startMenuItems}
+      />
     </div>
+
+    <PowerScreen
+      state={power}
+      restart={restartRef.current}
+      onBooted={handleBooted}
+      onShutdownDone={handleShutdownDone}
+      onWake={handleWake}
+    />
+    </>
   )
 }

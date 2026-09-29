@@ -31,9 +31,12 @@ export function useWindowManager() {
     setWindows((prev) => prev.filter((w) => w.id !== id))
   }, [])
 
+  // 시스템 종료/다시 시작 때 열려 있던 창을 모두 닫습니다.
+  const closeAll = useCallback(() => setWindows([]), [])
+
   const toggleMinimize = useCallback((id) => {
     setWindows((prev) => prev.map((w) => (w.id === id ? { ...w, minimized: !w.minimized } : w)))
   }, [])
 
-  return { windows, openWindow, closeWindow, focusWindow, toggleMinimize }
+  return { windows, openWindow, closeWindow, closeAll, focusWindow, toggleMinimize }
 }

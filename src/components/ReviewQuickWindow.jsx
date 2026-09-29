@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import ReviewEditor from './ReviewEditor'
+import PixelIcon from './PixelIcon'
 
 const EMPTY_FORM = { title: '', author: '', status: 'reading' }
 
@@ -95,7 +96,7 @@ export default function ReviewQuickWindow({ isReady, addOrUpdateBook, saveReview
   return (
     <div className="review-quick">
       <p className="review-quick__active-book">
-        📖 <strong>{activeBook.title}</strong>에 대한 감상문
+        <PixelIcon name="book-open" className="pixel-icon--inline" /> <strong>{activeBook.title}</strong>에 대한 감상문
       </p>
 
       {savedAt && (

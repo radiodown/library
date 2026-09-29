@@ -6,6 +6,10 @@ import {
   getBooks,
   upsertBook,
   deleteBook,
+  getTrashedBooks,
+  trashBook,
+  restoreBook as restoreBookRow,
+  emptyTrash as emptyTrashRows,
   getReviewsForBook,
   upsertReview,
   deleteReview,
@@ -20,12 +24,16 @@ import {
   deleteQuote,
 } from '../db/sqlite'
 import { openDbFile, saveDbFile, isFileSystemAccessSupported } from '../db/fileIO'
+import { saveLastLibrary, loadLastLibrary } from '../db/lastLibrary'
 
 const UNSAVED_LABEL = '새 서재 (아직 저장 안 됨)'
 const AUTOSAVE_INTERVAL_MS = 60_000
 
-/** 서재 DB의 전체 생명주기(생성/열기/저장)와 책·감상문 CRUD를 관리하는 훅. */
-export function useLibraryDb() {
+/**
+ * 서재 DB의 전체 생명주기(생성/열기/저장)와 책·감상문 CRUD를 관리하는 훅.
+ * rememberLast: 연 서재의 사본을 브라우저에 보관해 다음에 바로 불러올 수 있게 합니다. (모바일용)
+ */
+export function useLibraryDb({ rememberLast = false } = {}) {
   const dbRef = useRef(null)
   const fileHandleRef = useRef(null)
   // 변경할 때마다 증가하는 번호. 저장하는 동안(await 중) 생긴 변경을 "저장됨"으로 잘못 표시하지 않기 위함.
@@ -35,6 +43,7 @@ export function useLibraryDb() {
 
   const [books, setBooks] = useState([])
   const [rankingIds, setRankingIdsState] = useState([]) // 1위가 맨 앞
+  const [trashedBooks, setTrashedBooks] = useState([]) // 휴지통에 있는 책
   const [readings, setReadings] = useState([]) // 모든 책의 다시 읽기(2회차~)
   const [quotes, setQuotes] = useState([]) // 모든 책의 인용구
   const [fileName, setFileName] = useState(null)
@@ -44,6 +53,7 @@ export function useLibraryDb() {
   const [error, setError] = useState(null)
   const [lastSaved, setLastSaved] = useState(null) // { at: Date, auto: boolean }
   const [canAutoSave, setCanAutoSave] = useState(false) // 덮어쓸 파일 핸들이 있을 때만 가능
+  const [lastLibrary, setLastLibrary] = useState(null) // { name, savedAt } 브라우저에 보관된 사본
   // 감상문이 다른 창(floating window)에서 저장/삭제될 수 있으므로, 값 자체보다
   // "바뀌었다"는 신호가 필요한 컴포넌트(예: BookDetail)가 다시 렌더링되도록 매번 증가시킵니다.
   const [reviewsVersion, setReviewsVersion] = useState(0)
@@ -57,6 +67,7 @@ export function useLibraryDb() {
   const refreshAll = useCallback(() => {
     if (!dbRef.current) return
     setBooks(getBooks(dbRef.current))
+    setTrashedBooks(getTrashedBooks(dbRef.current))
     setRankingIdsState(getRankingIds(dbRef.current))
     setReadings(getReadings(dbRef.current))
     setQuotes(getQuotes(dbRef.current))
@@ -97,6 +108,7 @@ export function useLibraryDb() {
       runGuarded(async () => {
         const { buffer, handle, name } = await openDbFile()
         dbRef.current = await loadDatabaseFromBuffer(buffer)
+        if (rememberLast) saveLastLibrary(name, new Uint8Array(buffer)).then((info) => info && setLastLibrary(info))
         fileHandleRef.current = handle
         setCanAutoSave(!!handle)
         setFileName(name)
@@ -105,8 +117,32 @@ export function useLibraryDb() {
         setIsReady(true)
         refreshAll()
       }),
+    [runGuarded, refreshAll, rememberLast],
+  )
+
+  // 브라우저에 보관된 마지막 서재 사본을 엽니다. (파일 핸들이 없으므로 저장은 다운로드가 됩니다)
+  const restoreLastLibrary = useCallback(
+    () =>
+      runGuarded(async () => {
+        const last = await loadLastLibrary()
+        if (!last) throw new Error('보관된 서재가 없습니다. "서재 파일 열기"로 불러와 주세요.')
+        dbRef.current = await loadDatabaseFromBuffer(last.bytes)
+        fileHandleRef.current = null
+        setCanAutoSave(false)
+        setFileName(last.name)
+        savedRevisionRef.current = revisionRef.current
+        setIsDirty(false)
+        setIsReady(true)
+        refreshAll()
+      }),
     [runGuarded, refreshAll],
   )
+
+  // 앱을 열면 보관된 사본이 있는지 확인해 "마지막 서재 불러오기" 버튼에 쓸 정보를 준비합니다.
+  useEffect(() => {
+    if (!rememberLast) return
+    loadLastLibrary().then((last) => last && setLastLibrary({ name: last.name, savedAt: last.savedAt }))
+  }, [rememberLast])
 
   // 실제 저장. 수동 저장과 자동 저장이 함께 쓰며, 동시에 두 번 돌지 않게 막습니다.
   const persist = useCallback(
@@ -176,7 +212,29 @@ export function useLibraryDb() {
     [refreshAll],
   )
 
+  // 책 삭제는 완전히 지우지 않고 휴지통으로 보냅니다. 복원하면 감상문/회차/인용구도 그대로 돌아옵니다.
   const removeBook = useCallback(
+    (id) => {
+      if (!dbRef.current) return
+      trashBook(dbRef.current, id)
+      markDirty()
+      refreshAll()
+    },
+    [refreshAll],
+  )
+
+  const restoreBook = useCallback(
+    (id) => {
+      if (!dbRef.current) return
+      restoreBookRow(dbRef.current, id)
+      markDirty()
+      refreshAll()
+    },
+    [refreshAll],
+  )
+
+  // 휴지통에서 한 권을 영구 삭제
+  const purgeBook = useCallback(
     (id) => {
       if (!dbRef.current) return
       deleteBook(dbRef.current, id)
@@ -185,6 +243,13 @@ export function useLibraryDb() {
     },
     [refreshAll],
   )
+
+  const emptyTrash = useCallback(() => {
+    if (!dbRef.current) return
+    emptyTrashRows(dbRef.current)
+    markDirty()
+    refreshAll()
+  }, [refreshAll])
 
   const saveRanking = useCallback((bookIds) => {
     if (!dbRef.current) return
@@ -259,7 +324,13 @@ export function useLibraryDb() {
     fileName,
     lastSaved,
     canAutoSave,
+    lastLibrary,
+    restoreLastLibrary,
     books,
+    trashedBooks,
+    restoreBook,
+    purgeBook,
+    emptyTrash,
     rankingIds,
     saveRanking,
     readings,

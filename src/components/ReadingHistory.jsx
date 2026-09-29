@@ -95,7 +95,7 @@ function ReadingRow({ label, reading, note, onEdit, onDelete }) {
  * 책의 독서 회차. 1회차는 책 정보의 시작일/완독일/별점이고(정보 수정에서 바꿉니다),
  * 2회차부터는 여기서 추가하는 "다시 읽기" 기록입니다.
  */
-export default function ReadingHistory({ book, readings, saveReading, removeReading }) {
+export default function ReadingHistory({ readOnly = false, book, readings, saveReading, removeReading }) {
   const [editing, setEditing] = useState(null) // null | 'new' | reading object
 
   const hasFirst = book.startDate || book.finishDate || book.rating
@@ -110,13 +110,18 @@ export default function ReadingHistory({ book, readings, saveReading, removeRead
     removeReading(reading.id)
   }
 
+  // 보기 전용일 때 보여 줄 기록이 없으면 섹션 자체를 숨깁니다.
+  if (readOnly && !hasFirst && readings.length === 0) return null
+
   return (
     <div className="book-detail__section">
       <div className="book-detail__section-header">
         <h3>독서 회차</h3>
-        <button type="button" onClick={() => setEditing('new')} disabled={editing !== null}>
-          + 다시 읽기
-        </button>
+        {!readOnly && (
+          <button type="button" onClick={() => setEditing('new')} disabled={editing !== null}>
+            + 다시 읽기
+          </button>
+        )}
       </div>
 
       {!hasFirst && readings.length === 0 && editing === null && (
@@ -128,7 +133,7 @@ export default function ReadingHistory({ book, readings, saveReading, removeRead
           <ReadingRow
             label="1회차"
             reading={book}
-            note="책 정보 수정에서 바꿀 수 있습니다"
+            note={readOnly ? undefined : '책 정보 수정에서 바꿀 수 있습니다'}
           />
         )}
         {readings.map((reading, i) =>
@@ -145,8 +150,8 @@ export default function ReadingHistory({ book, readings, saveReading, removeRead
               key={reading.id}
               label={`${i + 2}회차`}
               reading={reading}
-              onEdit={() => setEditing(reading)}
-              onDelete={() => handleDelete(reading)}
+              onEdit={readOnly ? undefined : () => setEditing(reading)}
+              onDelete={readOnly ? undefined : () => handleDelete(reading)}
             />
           ),
         )}

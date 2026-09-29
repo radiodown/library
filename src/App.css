@@ -602,49 +602,67 @@
   font-size: 12px;
 }
 
-/* ====== 오늘의 인용구 ====== */
-.quote-day {
+/* ====== 오늘의 인용구 (Windows 98 알림창 스타일 팝업) ====== */
+.win--dialog {
+  max-height: calc(100vh - 60px);
+  max-height: calc(100dvh - var(--taskbar-h, 40px) - 24px);
+}
+
+.quote-dialog {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  height: 100%;
+  gap: 16px;
 }
 
-.quote-day--empty {
+.quote-dialog__body {
+  display: flex;
   align-items: flex-start;
+  gap: 14px;
 }
 
-.quote-day__label {
-  margin: 0;
-  font-weight: bold;
+.quote-dialog__icon {
+  flex: none;
+  font-size: 34px;
+  line-height: 1;
 }
 
-.quote-day__text {
+.quote-dialog__content {
   flex: 1;
+  min-width: 0;
+}
+
+.quote-dialog__text {
+  max-height: 40vh;
   margin: 0;
-  padding: 8px 12px;
   overflow-y: auto;
-  border: 2px inset var(--win-face);
-  border-left: 4px solid var(--win-title-start);
-  background: var(--win-light);
-  font-size: 15px;
   line-height: 1.6;
   white-space: pre-wrap;
+  overflow-wrap: anywhere;
 }
 
-.quote-day__source {
-  margin: 0;
+.quote-dialog__source {
+  margin: 8px 0 0;
+  color: var(--win-text-muted);
   text-align: right;
 }
 
-.quote-day__actions {
+.quote-dialog__buttons {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
+  justify-content: center;
   gap: 10px;
 }
 
-.quote-day__count {
+.quote-dialog__btn {
+  min-width: 84px;
+  padding: 4px 14px;
+}
+
+.quote-dialog__count {
+  margin-left: auto;
   color: var(--win-text-muted);
+  font-size: 11px;
 }
 
 /* ====== 독서 통계 ====== */
@@ -1434,4 +1452,325 @@
 
 .review-quick__another {
   align-self: flex-start;
+}
+
+/* ====== 휴지통 ====== */
+.trash {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  height: 100%;
+}
+
+.trash--empty {
+  align-items: flex-start;
+}
+
+.trash__list,
+.trash__empty {
+  flex: 1;
+  margin: 0;
+  border: 2px inset var(--win-face);
+  background: var(--win-light);
+}
+
+.trash__list {
+  padding: 0;
+  overflow-y: auto;
+  list-style: none;
+}
+
+.trash__empty {
+  padding: 32px 12px;
+  color: var(--win-text-muted);
+  text-align: center;
+}
+
+.trash__list li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--win-face-light);
+}
+
+.trash__info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.trash__info strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.trash__info span {
+  color: var(--win-text-muted);
+  font-size: 11px;
+}
+
+.trash__actions {
+  display: flex;
+  flex: none;
+  gap: 4px;
+}
+
+.trash__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.trash__notice {
+  min-width: 0;
+  color: var(--win-text-muted);
+  font-size: 11px;
+}
+
+/* 휴지통을 비울 때 종이가 구겨져 사라지는 효과 */
+.trash__list.is-emptying li {
+  animation: crumple 0.6s ease-in forwards;
+}
+
+@keyframes crumple {
+  40% {
+    transform: scale(0.92) rotate(-3deg);
+  }
+  100% {
+    transform: scale(0.05) rotate(28deg) translateY(28px);
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .trash__list.is-emptying li {
+    animation: none;
+  }
+}
+
+/* ====== 시스템 종료 대화상자 ====== */
+.shutdown-dialog {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.shutdown-dialog__body {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+}
+
+.shutdown-dialog__icon {
+  flex: none;
+  font-size: 34px;
+  line-height: 1;
+}
+
+.shutdown-dialog__prompt {
+  margin: 0 0 8px;
+}
+
+.shutdown-dialog__option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 3px 0;
+  cursor: pointer;
+}
+
+/* 전역 input 스타일(width: 100%)이 라디오 버튼을 늘리지 않게 */
+.shutdown-dialog .shutdown-dialog__option input {
+  width: auto;
+  min-height: 0;
+  margin: 0;
+  font-size: inherit;
+}
+
+.shutdown-dialog__warn {
+  margin: 0;
+  padding: 6px 10px;
+  border: 1px solid var(--win-shadow);
+  background: #ffffe1;
+  color: var(--win-danger);
+}
+
+.shutdown-dialog__buttons {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+}
+
+/* ====== 부팅 / 종료 화면 ====== */
+.power {
+  position: fixed;
+  inset: 0;
+  z-index: 100000; /* 작업표시줄(9999)과 모든 창 위 */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 28px;
+  padding: 24px;
+  cursor: default;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.power--boot {
+  background: linear-gradient(180deg, #2b6fc0 0%, #7fb2e8 55%, #cfe6fb 100%);
+  color: #ffffff;
+}
+
+.power__brand {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+
+.power__logo {
+  width: 88px;
+  height: 88px;
+  filter: drop-shadow(3px 3px 0 rgba(0, 0, 0, 0.35));
+}
+
+.power__name {
+  font: italic bold 44px 'Arial Narrow', Arial, sans-serif;
+  line-height: 1;
+  text-shadow: 3px 3px 0 rgba(0, 0, 40, 0.45);
+}
+
+.power__name strong {
+  margin-left: 6px;
+  font-size: 54px;
+}
+
+.power__sub {
+  margin-top: 6px;
+  font-size: 15px;
+  letter-spacing: 2px;
+  text-shadow: 1px 1px 0 rgba(0, 0, 40, 0.45);
+}
+
+/* 클래식 진행 막대: 파란 블록이 왼쪽에서 오른쪽으로 지나갑니다. */
+.power__progress {
+  position: relative;
+  width: min(360px, 80vw);
+  height: 22px;
+  overflow: hidden;
+  border: 2px inset var(--win-face);
+  background: var(--win-light);
+}
+
+.power__progress span {
+  position: absolute;
+  top: 2px;
+  bottom: 2px;
+  left: -30%;
+  width: 30%;
+  background: repeating-linear-gradient(90deg, var(--win-title-start) 0 10px, transparent 10px 13px);
+  animation: power-slide 1.1s linear infinite;
+}
+
+@keyframes power-slide {
+  to {
+    left: 100%;
+  }
+}
+
+.power__hint {
+  margin: 0;
+  font-size: 12px;
+  opacity: 0.85;
+}
+
+.power--shutdown {
+  background: #4a90c8;
+  color: #ffffff;
+}
+
+.power__message {
+  margin: 0;
+  font: bold 22px Tahoma, Arial, sans-serif;
+  text-align: center;
+  text-shadow: 2px 2px 0 rgba(0, 0, 40, 0.45);
+}
+
+.power--off {
+  background: #000000;
+  text-align: center;
+}
+
+.power__off-message {
+  margin: 0;
+  color: #ff9a1f;
+  font: 20px 'Courier New', monospace;
+  line-height: 1.5;
+}
+
+.power__off-hint {
+  margin: 0;
+  color: #7a7a7a;
+  font-size: 12px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .power__progress span {
+    animation: none;
+    left: 0;
+    width: 100%;
+  }
+}
+
+/* ====== Windows 98 도트 아이콘 ====== */
+.pixel-icon {
+  display: block;
+  flex: none;
+  image-rendering: pixelated;
+}
+
+/* 글자 사이에 끼워 넣는 작은 아이콘 */
+.pixel-icon--inline {
+  display: inline-block;
+  margin-right: 6px;
+  vertical-align: -3px;
+}
+
+.desktop-icon__glyph,
+.win__icon,
+.quote-dialog__icon,
+.shutdown-dialog__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 0;
+}
+
+/* 선택되면 배경의 남색이 비쳐 보이게 (Windows 98의 선택 아이콘 느낌) */
+.desktop-icon.is-selected .pixel-icon {
+  opacity: 0.75;
+}
+
+.taskbar__item {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* 시작 메뉴는 Windows 98처럼 32px 큰 아이콘 */
+.start-menu__icon {
+  display: flex;
+  justify-content: center;
+  width: 32px;
+}
+
+.start-menu__item {
+  padding-top: 3px;
+  padding-bottom: 3px;
 }

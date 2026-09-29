@@ -11,6 +11,7 @@ const STATUS_LABEL = {
 
 /** 선택된 책의 정보와 감상문 목록. 감상문 작성/수정은 별도의 뜨는 창에서 이루어집니다. */
 export default function BookDetail({
+  readOnly = false, // 모바일: 보기만 가능하고 작성/수정/삭제 버튼을 숨깁니다
   book,
   reviews,
   readings,
@@ -91,39 +92,52 @@ export default function BookDetail({
               ))}
             </p>
           )}
-          <div className="book-detail__actions">
-            <button
-              type="button"
-              className="book-detail__progress"
-              title={`오늘(${today})로 기록됩니다`}
-              onClick={progressAction.run}
-            >
-              {progressAction.label}
-            </button>
-            <button onClick={onEditBook}>정보 수정</button>
-            <button onClick={onDeleteBook} className="danger">
-              책 삭제
-            </button>
-          </div>
+          {!readOnly && (
+            <div className="book-detail__actions">
+              <button
+                type="button"
+                className="book-detail__progress"
+                title={`오늘(${today})로 기록됩니다`}
+                onClick={progressAction.run}
+              >
+                {progressAction.label}
+              </button>
+              <button onClick={onEditBook}>정보 수정</button>
+              <button onClick={onDeleteBook} className="danger">
+                책 삭제
+              </button>
+            </div>
+          )}
         </div>
       </div>
 
       <ReadingHistory
+        readOnly={readOnly}
         book={book}
         readings={readings}
         saveReading={saveReading}
         removeReading={removeReading}
       />
 
-      <QuoteList book={book} quotes={quotes} saveQuote={saveQuote} removeQuote={removeQuote} />
+      <QuoteList
+        readOnly={readOnly}
+        book={book}
+        quotes={quotes}
+        saveQuote={saveQuote}
+        removeQuote={removeQuote}
+      />
 
       <div className="book-detail__reviews">
         <div className="book-detail__reviews-header">
           <h3>독서감상문</h3>
-          <button onClick={onAddReview}>+ 감상문 추가</button>
+          {!readOnly && <button onClick={onAddReview}>+ 감상문 추가</button>}
         </div>
 
-        {reviews.length === 0 && <p className="book-detail__empty">아직 작성한 감상문이 없습니다.</p>}
+        {reviews.length === 0 && (
+          <p className="book-detail__empty">
+            {readOnly ? '작성된 감상문이 없습니다.' : '아직 작성한 감상문이 없습니다.'}
+          </p>
+        )}
 
         <ul className="review-list">
           {reviews.map((review) => (
@@ -134,10 +148,14 @@ export default function BookDetail({
                 <span>{new Date(review.updatedAt).toLocaleString()}</span>
                 <div className="review-list__item-actions">
                   <button onClick={() => onViewReview(review)}>보기</button>
-                  <button onClick={() => onEditReview(review)}>수정</button>
-                  <button onClick={() => handleDeleteReview(review.id)} className="danger">
-                    삭제
-                  </button>
+                  {!readOnly && (
+                    <>
+                      <button onClick={() => onEditReview(review)}>수정</button>
+                      <button onClick={() => handleDeleteReview(review.id)} className="danger">
+                        삭제
+                      </button>
+                    </>
+                  )}
                 </div>
               </div>
               <p className="review-list__preview">

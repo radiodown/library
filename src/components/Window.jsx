@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react'
+import PixelIcon from './PixelIcon'
 
 const MIN_WIDTH = 360
 const MIN_HEIGHT = 220
@@ -15,11 +16,14 @@ export default function Window({
   initialPosition = { x: 80, y: 60 },
   initialSize = { width: 720, height: 480 },
   minimized = false,
+  maximized: maximizedProp = false, // 모바일: 화면(작업표시줄 위)을 꽉 채우고 드래그/크기 조절 없음
+  dialog = false, // Windows 98 알림창처럼 작은 팝업: 최소화/크기 조절 없이 닫기만 있고, 모바일에서도 전체 화면이 되지 않음
   onClose,
   onMinimize,
   onFocus,
   children,
 }) {
+  const maximized = maximizedProp && !dialog
   const [pos, setPos] = useState(initialPosition)
   const [size, setSize] = useState(initialSize)
   const dragRef = useRef(null)
@@ -39,6 +43,7 @@ export default function Window({
 
   const handleTitlePointerDown = (e) => {
     onFocus()
+    if (maximized) return
     dragRef.current = { startX: e.clientX, startY: e.clientY, originX: pos.x, originY: pos.y }
     window.addEventListener('pointermove', handleDragMove)
     window.addEventListener('pointerup', handleDragUp)
@@ -74,23 +79,37 @@ export default function Window({
 
   return (
     <div
-      className={`win${minimized ? ' win--minimized' : ''}`}
-      style={{ left: pos.x, top: pos.y, width: size.width, height: size.height, zIndex }}
+      className={`win${minimized ? ' win--minimized' : ''}${maximized ? ' win--maximized' : ''}${dialog ? ' win--dialog' : ''}`}
+      style={
+        maximized
+          ? { zIndex }
+          : {
+              left: pos.x,
+              top: pos.y,
+              width: size.width,
+              height: dialog ? 'auto' : size.height, // 대화상자는 내용 높이에 맞춥니다
+              zIndex,
+            }
+      }
       onPointerDownCapture={onFocus}
     >
       <div className="win__titlebar" onPointerDown={handleTitlePointerDown}>
-        <span className="win__icon">{icon}</span>
+        <span className="win__icon">
+          <PixelIcon name={icon} />
+        </span>
         <span className="win__title">{title}</span>
         <div className="win__controls">
-          <button
-            type="button"
-            className="win__control"
-            onPointerDown={(e) => e.stopPropagation()}
-            onClick={onMinimize}
-            title="최소화"
-          >
-            _
-          </button>
+          {!dialog && (
+            <button
+              type="button"
+              className="win__control"
+              onPointerDown={(e) => e.stopPropagation()}
+              onClick={onMinimize}
+              title="최소화"
+            >
+              _
+            </button>
+          )}
           <button
             type="button"
             className="win__control win__control--close"
@@ -103,11 +122,13 @@ export default function Window({
         </div>
       </div>
       <div className="win__body">{children}</div>
-      <div
-        className="win__resize-handle"
-        onPointerDown={handleResizePointerDown}
-        title="크기 조절"
-      />
+      {!maximized && !dialog && (
+        <div
+          className="win__resize-handle"
+          onPointerDown={handleResizePointerDown}
+          title="크기 조절"
+        />
+      )}
     </div>
   )
 }

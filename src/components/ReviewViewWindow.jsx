@@ -1,4 +1,5 @@
 import ReviewViewer from './ReviewViewer'
+import PixelIcon from './PixelIcon'
 
 /**
  * "감상문 보기" 창의 내용. 감상문마다 별도의 창으로 열리므로 여러 개를 나란히 띄워 놓고 읽을 수 있습니다.
@@ -17,16 +18,18 @@ export default function ReviewViewWindow({ bookTitle, review, onEdit }) {
     <div className="review-view-window">
       <div className="review-view-window__head">
         <p className="review-quick__active-book">
-          📖 <strong>{bookTitle}</strong>
+          <PixelIcon name="book-open" className="pixel-icon--inline" /> <strong>{bookTitle}</strong>
         </p>
         <div className="review-list__meta">
           <span className="format-badge">{review.format}</span>
           <span>{review.content.length.toLocaleString()}자</span>
           <span>수정 {new Date(review.updatedAt).toLocaleString()}</span>
           <div className="review-list__item-actions">
-            <button type="button" onClick={onEdit}>
-              수정
-            </button>
+            {onEdit && (
+              <button type="button" onClick={onEdit}>
+                수정
+              </button>
+            )}
           </div>
         </div>
       </div>

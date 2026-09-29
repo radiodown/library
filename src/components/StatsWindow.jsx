@@ -249,11 +249,14 @@ export default function StatsWindow({
 
         {tab === 'manage' && (
           <section className="stats__section">
-            {attentionTotal === 0 && <p className="stats__ok">정리할 항목이 없습니다. 👍</p>}
+            {attentionTotal === 0 && <p className="stats__ok">정리할 항목이 없습니다.</p>}
             <AttentionGroup
               title="독후감이 없는 완독 책"
               hint="다 읽었지만 감상문을 쓰지 않았습니다."
-              rows={attention.noReview.map((book) => ({ book, action: writeReview(book) }))}
+              rows={attention.noReview.map((book) => ({
+                book,
+                action: onWriteReview ? writeReview(book) : undefined,
+              }))}
             />
             <AttentionGroup
               title="오래 읽고 있는 책"

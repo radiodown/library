@@ -1,0 +1,362 @@
+/* ====== 모바일 (읽기 전용) ======
+   바탕화면, 아이콘, 시작 메뉴, 작업표시줄은 데스크탑과 같은 구조를 유지하고,
+   창은 화면(작업표시줄 위)을 꽉 채우는 전체 화면으로 엽니다. App.css 뒤에 불러옵니다.
+   .is-mobile  : 데스크탑 골격(아이콘/창/작업표시줄/시작 메뉴)을 터치용으로 조정
+   .m-content  : 창 안의 내용(BookList, BookDetail, StatsWindow 등 재사용 컴포넌트)을 모바일용으로 조정 */
+
+.desktop.is-mobile {
+  /* 작업표시줄 높이. 홈 인디케이터 영역까지 포함합니다. */
+  --taskbar-h: calc(52px + env(safe-area-inset-bottom, 0px));
+  min-height: 100vh;
+  min-height: 100dvh;
+  padding-bottom: var(--taskbar-h);
+}
+
+/* 입력창은 16px 미만이면 iOS가 확대해 버립니다. */
+.is-mobile input,
+.is-mobile select,
+.is-mobile textarea {
+  min-height: 40px;
+  font-size: 16px;
+}
+
+/* ---- 바탕화면 아이콘: 세로 한 줄 대신 격자 ---- */
+.is-mobile .desktop__icons {
+  position: static;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(84px, 1fr));
+  gap: 10px 6px;
+  padding: calc(16px + env(safe-area-inset-top, 0px)) 12px 12px;
+}
+
+.is-mobile .desktop-icon {
+  width: auto;
+  min-height: 92px;
+  padding: 8px 4px;
+  touch-action: manipulation; /* 더블탭 확대 방지 */
+}
+
+/* 16px 그림은 4배, 32px 정밀판은 2배가 되는 64px로 키워야 픽셀이 고르게 또렷합니다. */
+.is-mobile .desktop-icon__glyph .pixel-icon {
+  width: 64px;
+  height: 64px;
+}
+
+.is-mobile .desktop-icon__label {
+  font-size: 12px;
+}
+
+/* ---- 창: 전체 화면 ---- */
+.is-mobile .win--maximized {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: var(--taskbar-h);
+  left: 0;
+  border: none;
+  box-shadow: none;
+}
+
+.is-mobile .win__titlebar {
+  padding: 6px 6px 6px 10px;
+  cursor: default;
+}
+
+/* 노치 영역은 화면 맨 위에 붙는 전체 화면 창에서만 피합니다. (가운데 뜨는 팝업에는 필요 없음) */
+.is-mobile .win--maximized .win__titlebar {
+  padding-top: calc(6px + env(safe-area-inset-top, 0px));
+}
+
+.is-mobile .win__icon {
+  font-size: 18px;
+}
+
+.is-mobile .win__title {
+  font-size: 15px;
+}
+
+.is-mobile .win__control {
+  width: 40px;
+  height: 34px;
+  font-size: 14px;
+}
+
+.is-mobile .win__body {
+  padding: 10px;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* ---- 작업표시줄, 시작 메뉴 ---- */
+.is-mobile .taskbar {
+  height: var(--taskbar-h);
+  gap: 6px;
+  padding: 4px 6px calc(4px + env(safe-area-inset-bottom, 0px));
+}
+
+.is-mobile .taskbar button {
+  min-height: 40px;
+}
+
+.is-mobile .taskbar__item {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 4px;
+  max-width: 120px;
+}
+
+.taskbar__title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.is-mobile .taskbar__clock {
+  padding: 2px 6px;
+  font-size: 12px;
+}
+
+.is-mobile .start-menu {
+  min-width: 250px;
+  max-height: calc(100vh - var(--taskbar-h) - 16px);
+  max-height: calc(100dvh - var(--taskbar-h) - 16px);
+  overflow-y: auto;
+}
+
+.is-mobile .start-menu__item {
+  min-height: 48px;
+  font-size: 15px;
+}
+
+/* ====== 창 안의 내용 ====== */
+.m-content [hidden] {
+  display: none !important;
+}
+
+.m-content button {
+  min-height: 40px;
+}
+
+.m-page {
+  padding: 12px;
+  border: 2px inset var(--win-face);
+  background: var(--win-face-light);
+}
+
+.m-back {
+  margin-bottom: 10px;
+  font-weight: bold;
+}
+
+.m-empty {
+  padding: 32px 12px;
+  color: var(--win-text-muted);
+  line-height: 1.7;
+  text-align: center;
+}
+
+/* ---- 서재 파일 열기 안내 ---- */
+.m-open {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 8px 4px;
+  line-height: 1.6;
+}
+
+.m-open p {
+  margin: 0;
+}
+
+.m-open button {
+  min-height: 52px;
+  font-size: 15px;
+}
+
+.m-content .m-primary {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  font-weight: bold;
+}
+
+.m-primary small {
+  max-width: 100%;
+  overflow: hidden;
+  color: var(--win-text-muted);
+  font-size: 11px;
+  font-weight: normal;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.m-hint {
+  color: var(--win-text-muted);
+  font-size: 12px;
+}
+
+.m-error {
+  margin: 0;
+  padding: 8px 10px;
+  border: 1px solid var(--win-danger);
+  background: #ffe8e8;
+  color: var(--win-danger);
+}
+
+/* ---- 서재 목록 (BookList 재사용) ---- */
+.m-content .book-list {
+  padding: 0;
+  border: none;
+  background: transparent;
+}
+
+.m-content .book-list__header {
+  display: none; /* 창 제목에 이미 있고, 모바일은 책 추가를 하지 않습니다 */
+}
+
+.m-content .book-list__filters {
+  gap: 6px;
+}
+
+.m-content .book-list__filters button {
+  flex: 1;
+  padding: 4px 6px;
+}
+
+.m-content .book-list__items li {
+  padding: 12px 10px;
+  border-bottom: 1px solid var(--win-face-light);
+}
+
+.m-content .book-list__title {
+  font-size: 15px;
+}
+
+/* ---- 책 상세 (BookDetail 재사용) ---- */
+.m-content .book-detail__header {
+  gap: 12px;
+}
+
+.m-content .book-detail__cover img,
+.m-content .book-detail__cover--placeholder {
+  width: 92px;
+  height: 132px;
+}
+
+.m-content .book-detail__info h2 {
+  font-size: 18px;
+  line-height: 1.3;
+  word-break: keep-all;
+}
+
+.m-content .review-list__meta {
+  flex-wrap: wrap;
+}
+
+.m-content .review-list__preview {
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.m-content .quote-list__item blockquote {
+  font-size: 15px;
+  line-height: 1.7;
+}
+
+.m-content .reading-list__item {
+  flex-wrap: wrap;
+}
+
+/* ---- 감상문 읽기 창 ---- */
+.m-reader .review-viewer {
+  font-size: 16px;
+  line-height: 1.8;
+  overflow-wrap: anywhere;
+}
+
+.m-reader .review-viewer img {
+  max-width: 100%;
+  height: auto;
+}
+
+/* 넓은 표/코드는 본문이 아니라 자기 안에서 가로 스크롤 */
+.m-reader .review-viewer table,
+.m-reader .review-viewer pre {
+  display: block;
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+/* ---- 랭킹 ---- */
+.m-ranking {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border: 2px inset var(--win-face);
+  background: var(--win-light);
+}
+
+.m-content .m-ranking button {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 8px 10px;
+  border: none;
+  border-bottom: 1px solid var(--win-face-light);
+  background: transparent;
+  text-align: left;
+}
+
+.m-ranking__no {
+  flex: none;
+  width: 28px;
+  font-size: 18px;
+  font-weight: bold;
+  text-align: center;
+}
+
+.m-ranking__cover {
+  flex: none;
+  width: 40px;
+  height: 58px;
+  object-fit: cover;
+  background: var(--win-face-light);
+}
+
+.m-ranking__info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.m-ranking__info span {
+  color: var(--win-text-muted);
+  font-size: 12px;
+}
+
+/* ---- 통계 (StatsWindow 재사용) ---- */
+.m-content .stats__tabs {
+  padding: 0;
+}
+
+.m-content .stats__tab {
+  flex: 1;
+  justify-content: center;
+  padding: 4px 6px;
+}
+
+.m-content .stats__panel {
+  padding: 10px;
+}
+
+.m-content .stats__group li {
+  flex-wrap: wrap;
+}
+
+.m-content .stats__book {
+  white-space: normal;
+}
