@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { searchBooks } from '../api/kakaoBooks'
 
 const EMPTY_BOOK = {
   title: '',
@@ -22,6 +23,30 @@ export default function BookForm({ book, onSave, onCancel }) {
 
   const update = (patch) => setForm((prev) => ({ ...prev, ...patch }))
 
+  const [query, setQuery] = useState('')
+  const [results, setResults] = useState(null) // null: 검색 전
+  const [searching, setSearching] = useState(false)
+  const [searchError, setSearchError] = useState('')
+
+  const handleSearch = async () => {
+    if (!query.trim() || searching) return
+    setSearching(true)
+    setSearchError('')
+    try {
+      setResults(await searchBooks(query))
+    } catch (err) {
+      setResults(null)
+      setSearchError(err.message || '검색 중 오류가 발생했습니다.')
+    } finally {
+      setSearching(false)
+    }
+  }
+
+  const handlePick = (r) => {
+    update({ title: r.title, author: r.author, isbn: r.isbn, coverUrl: r.coverUrl })
+    setResults(null)
+  }
+
   const handleSubmit = (e) => {
     e.preventDefault()
     if (!form.title.trim()) return
@@ -42,6 +67,53 @@ export default function BookForm({ book, onSave, onCancel }) {
   return (
     <form className="book-form" onSubmit={handleSubmit}>
       <h3>{book ? '책 정보 수정' : '새 책 추가'}</h3>
+
+      {!book && (
+        <div className="book-search">
+          <div className="book-search__bar">
+            <input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault()
+                  handleSearch()
+                }
+              }}
+              placeholder="도서 검색 (제목, 저자, ISBN)"
+            />
+            <button type="button" onClick={handleSearch} disabled={searching}>
+              {searching ? '검색 중...' : '검색'}
+            </button>
+          </div>
+          {searchError && <p className="book-search__msg">{searchError}</p>}
+          {results && results.length === 0 && (
+            <p className="book-search__msg">검색 결과가 없습니다.</p>
+          )}
+          {results && results.length > 0 && (
+            <ul className="book-search__results">
+              {results.map((r) => (
+                <li key={r.id}>
+                  <button type="button" onClick={() => handlePick(r)}>
+                    {r.coverUrl ? (
+                      <img src={r.coverUrl} alt="" />
+                    ) : (
+                      <span className="book-search__nocover" />
+                    )}
+                    <span className="book-search__info">
+                      <strong>{r.title}</strong>
+                      <span>{r.author || '저자 미상'}</span>
+                      <span>
+                        {[r.publisher, r.publishedDate].filter(Boolean).join(' · ')}
+                      </span>
+                    </span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
 
       <label>
         제목 *
