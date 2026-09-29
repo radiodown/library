@@ -1,0 +1,99 @@
+:root {
+  color-scheme: light;
+  font-family: Tahoma, 'MS Sans Serif', Arial, sans-serif;
+  font-size: 12px;
+
+  /* Windows 98 팔레트 */
+  --win-face: #c0c0c0;
+  --win-face-light: #dfdfdf;
+  --win-light: #ffffff;
+  --win-shadow: #808080;
+  --win-dark-shadow: #000000;
+  --win-title-start: #000080;
+  --win-title-end: #1084d0;
+  --win-title-text: #ffffff;
+  --win-selection: #000080;
+  --win-selection-text: #ffffff;
+  --win-desktop: #008080;
+  --win-text: #000000;
+  --win-text-muted: #444444;
+  --win-danger: #800000;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--win-desktop);
+  color: var(--win-text);
+}
+
+/* 클래식 3D 눌림 버튼 */
+button {
+  font: inherit;
+  cursor: pointer;
+  background: var(--win-face);
+  color: var(--win-text);
+  border: 2px outset var(--win-face);
+  padding: 4px 12px;
+  border-radius: 0;
+}
+
+button:hover:not(:disabled) {
+  filter: brightness(1.03);
+}
+
+button:active:not(:disabled) {
+  border-style: inset;
+}
+
+button:disabled {
+  color: var(--win-shadow);
+  cursor: not-allowed;
+}
+
+button.danger {
+  color: var(--win-danger);
+  font-weight: bold;
+}
+
+input,
+select,
+textarea {
+  font: inherit;
+  background: var(--win-light);
+  color: var(--win-text);
+  border: 2px inset var(--win-face);
+  padding: 3px 5px;
+  border-radius: 0;
+  width: 100%;
+}
+
+h1,
+h2,
+h3 {
+  margin: 0.2em 0;
+  font-weight: bold;
+}
+
+/* 클래식 굵고 각진 스크롤바 */
+* {
+  scrollbar-width: auto;
+  scrollbar-color: var(--win-face) var(--win-face-light);
+}
+
+*::-webkit-scrollbar {
+  width: 16px;
+  height: 16px;
+}
+
+*::-webkit-scrollbar-track {
+  background: var(--win-face-light);
+}
+
+*::-webkit-scrollbar-thumb {
+  background: var(--win-face);
+  border: 2px outset var(--win-face);
+}

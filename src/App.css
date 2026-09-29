@@ -1,0 +1,720 @@
+/* ====== 데스크탑 ====== */
+.desktop {
+  position: relative;
+  min-height: 100vh;
+  padding-bottom: 40px; /* 하단 작업 표시줄 공간 확보 */
+  overflow: auto;
+}
+
+.desktop__icons {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  z-index: 1;
+}
+
+.desktop-icon {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  width: 78px;
+  background: transparent;
+  border: 1px dotted transparent;
+  color: #ffffff;
+  text-shadow: 1px 1px 1px #000000;
+  padding: 6px 4px;
+}
+
+.desktop-icon:hover {
+  filter: none;
+}
+
+.desktop-icon.is-selected {
+  background: rgba(0, 0, 128, 0.4);
+  border: 1px dotted #ffffff;
+}
+
+.desktop-icon__glyph {
+  font-size: 32px;
+  line-height: 1;
+}
+
+.desktop-icon__label {
+  font-size: 11px;
+  text-align: center;
+  line-height: 1.25;
+}
+
+/* ====== 창(윈도우) 프레임 ====== */
+.win {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  background: var(--win-face);
+  border: 2px outset var(--win-face);
+  box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.35);
+}
+
+.win--minimized {
+  display: none;
+}
+
+.win__titlebar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 4px;
+  background: linear-gradient(90deg, var(--win-title-start), var(--win-title-end));
+  color: var(--win-title-text);
+  cursor: move;
+  user-select: none;
+  touch-action: none;
+}
+
+.win__icon {
+  font-size: 14px;
+}
+
+.win__title {
+  flex: 1;
+  font-weight: bold;
+  font-size: 13px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.win__controls {
+  display: flex;
+  gap: 3px;
+}
+
+.win__control {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 16px;
+  background: var(--win-face);
+  color: var(--win-text);
+  border: 2px outset var(--win-face);
+  font-size: 10px;
+  line-height: 1;
+  font-weight: bold;
+  padding: 0;
+}
+
+.win__control:active {
+  border-style: inset;
+}
+
+.win__control--close {
+  color: var(--win-danger);
+}
+
+.win__body {
+  padding: 10px;
+  overflow-y: auto;
+  flex: 1;
+  min-height: 0; /* flex 자식이 내용만큼 늘어나지 않고 제대로 스크롤되도록 */
+}
+
+.win__resize-handle {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 14px;
+  height: 14px;
+  cursor: nwse-resize;
+  background: repeating-linear-gradient(
+    135deg,
+    transparent 0,
+    transparent 2px,
+    var(--win-shadow) 2px,
+    var(--win-shadow) 3px
+  );
+  touch-action: none;
+}
+
+/* ====== 작업 표시줄 ====== */
+.taskbar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 6px;
+  background: var(--win-face);
+  border-top: 2px solid var(--win-light);
+  z-index: 9999;
+}
+
+.taskbar__start {
+  font-weight: bold;
+}
+
+.taskbar__items {
+  display: flex;
+  gap: 6px;
+  flex: 1;
+  overflow-x: auto;
+}
+
+.taskbar__item {
+  border-style: outset;
+  font-size: 12px;
+}
+
+.taskbar__item.is-active {
+  border-style: inset;
+}
+
+.taskbar__clock {
+  border: 1px inset var(--win-face);
+  padding: 2px 8px;
+  background: var(--win-light);
+  font-family: 'Consolas', monospace;
+}
+
+/* ====== 공통: 공사중 줄무늬 ====== */
+.construction-bar {
+  height: 6px;
+  margin: 8px 0;
+  background: repeating-linear-gradient(
+    45deg,
+    #ffcc00,
+    #ffcc00 10px,
+    #000000 10px,
+    #000000 20px
+  );
+  border: 1px solid var(--win-dark-shadow);
+}
+
+/* ====== 서재 창 내부 ====== */
+.app__header {
+  border: 2px inset var(--win-face);
+  padding: 8px;
+  background: var(--win-face-light);
+}
+
+.app__error {
+  color: #ffffff;
+  background: var(--win-danger);
+  border: 2px outset var(--win-face);
+  padding: 4px 8px;
+  font-weight: bold;
+  margin: 8px 0 0;
+}
+
+.app__empty-state,
+.app__placeholder {
+  color: var(--win-text-muted);
+  text-align: center;
+  padding: 60px 20px;
+  border: 2px inset var(--win-face);
+  background: var(--win-light);
+  margin-top: 8px;
+}
+
+.app__empty-state-sub {
+  font-size: 11px;
+  font-style: italic;
+}
+
+.app__main {
+  display: grid;
+  grid-template-columns: 300px 1fr;
+  gap: 10px;
+  align-items: start;
+  margin-top: 8px;
+}
+
+@media (max-width: 720px) {
+  .app__main {
+    grid-template-columns: 1fr;
+  }
+}
+
+.app__detail {
+  background: var(--win-face-light);
+  border: 2px inset var(--win-face);
+  padding: 16px;
+  min-height: 300px;
+}
+
+/* ====== DataManager ====== */
+.data-manager {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.data-manager__actions {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.data-manager__status {
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px inset var(--win-face);
+  background: var(--win-light);
+  padding: 3px 8px;
+}
+
+.data-manager__filename {
+  font-weight: bold;
+}
+
+.data-manager__dirty {
+  color: var(--win-danger);
+  font-weight: bold;
+  animation: blink 1s steps(2, start) infinite;
+}
+
+@keyframes blink {
+  to {
+    visibility: hidden;
+  }
+}
+
+.data-manager__notice {
+  width: 100%;
+  font-size: 11px;
+  color: var(--win-text-muted);
+  margin: 4px 0 0;
+  border: 1px dashed var(--win-shadow);
+  padding: 4px 6px;
+  background: #ffffe0;
+}
+
+/* ====== BookList ====== */
+.book-list {
+  background: var(--win-face-light);
+  border: 2px inset var(--win-face);
+  padding: 10px;
+}
+
+.book-list__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  border-bottom: 2px groove var(--win-face);
+  padding-bottom: 6px;
+}
+
+.book-list__search {
+  margin-bottom: 6px;
+}
+
+.book-list__filters {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+}
+
+.book-list__filters button.is-active {
+  border-style: inset;
+  font-weight: bold;
+}
+
+.book-list__items {
+  list-style: none;
+  margin: 0;
+  padding: 2px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  background: var(--win-light);
+  border: 2px inset var(--win-face);
+}
+
+.book-list__items li {
+  padding: 6px 8px;
+  cursor: pointer;
+}
+
+.book-list__items li:hover {
+  background: #dfe8ff;
+}
+
+.book-list__items li.is-selected {
+  background: var(--win-selection);
+  color: var(--win-selection-text);
+}
+
+.book-list__items li.is-selected .book-list__meta {
+  color: var(--win-selection-text);
+}
+
+.book-list__title {
+  font-weight: bold;
+}
+
+.book-list__meta {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  color: var(--win-text-muted);
+  font-size: 11px;
+  margin-top: 2px;
+}
+
+.book-list__empty {
+  color: var(--win-text-muted);
+  text-align: center;
+  padding: 20px 0;
+  cursor: default;
+}
+
+.status-badge {
+  padding: 0 6px;
+  border: 1px solid var(--win-dark-shadow);
+  font-size: 10px;
+  font-weight: bold;
+}
+
+.status-badge--wishlist {
+  background: #e0c8ff;
+  color: #3c1a6e;
+}
+
+.status-badge--reading {
+  background: #bfe0ff;
+  color: #003b6e;
+}
+
+.status-badge--finished {
+  background: #c8f0c0;
+  color: #145214;
+}
+
+/* ====== BookForm ====== */
+.book-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-width: 480px;
+}
+
+.book-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  font-size: 12px;
+  font-weight: bold;
+  color: var(--win-text);
+}
+
+.book-form__row {
+  display: flex;
+  gap: 12px;
+}
+
+.book-form__row label {
+  flex: 1;
+}
+
+.book-form__actions {
+  display: flex;
+  gap: 6px;
+}
+
+/* ====== BookDetail ====== */
+.book-detail__header {
+  display: flex;
+  gap: 16px;
+}
+
+.book-detail__cover img,
+.book-detail__cover--placeholder {
+  width: 120px;
+  height: 170px;
+  object-fit: cover;
+  border: 2px inset var(--win-face);
+  background: var(--win-light);
+}
+
+.book-detail__info {
+  flex: 1;
+}
+
+.book-detail__author {
+  color: var(--win-text-muted);
+  margin: 0 0 6px;
+}
+
+.book-detail__rating {
+  color: #b8860b;
+  margin-left: 8px;
+}
+
+.book-detail__dates {
+  color: var(--win-text-muted);
+  font-size: 11px;
+}
+
+.tag-chip {
+  display: inline-block;
+  background: #ffffe0;
+  border: 1px solid var(--win-shadow);
+  padding: 1px 8px;
+  margin: 2px 4px 0 0;
+  font-size: 11px;
+  color: var(--win-text-muted);
+}
+
+.book-detail__actions {
+  display: flex;
+  gap: 6px;
+  margin-top: 12px;
+}
+
+.book-detail__reviews {
+  margin-top: 20px;
+  border-top: 2px groove var(--win-face);
+  padding-top: 12px;
+}
+
+.book-detail__reviews-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.book-detail__empty {
+  color: var(--win-text-muted);
+}
+
+.review-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.review-list__item {
+  border: 2px groove var(--win-face);
+  background: var(--win-light);
+  padding: 10px;
+}
+
+.review-list__meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--win-text-muted);
+  font-size: 11px;
+  margin-bottom: 8px;
+}
+
+.review-list__item-actions {
+  margin-left: auto;
+  display: flex;
+  gap: 6px;
+}
+
+.format-badge {
+  background: var(--win-face);
+  border: 1px outset var(--win-face);
+  padding: 0 6px;
+  text-transform: uppercase;
+  font-size: 10px;
+  font-weight: bold;
+}
+
+/* ====== ReviewEditor / Viewer ====== */
+.review-editor {
+  border: 2px inset var(--win-face);
+  background: var(--win-face-light);
+  padding: 10px;
+}
+
+.review-editor__format-tabs {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 8px;
+}
+
+.review-editor__format-tabs button.is-active {
+  border-style: inset;
+  font-weight: bold;
+}
+
+.review-editor__textarea {
+  width: 100%;
+  font-family: 'Consolas', monospace;
+  resize: vertical;
+}
+
+.review-editor__split {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+@media (max-width: 640px) {
+  .review-editor__split {
+    grid-template-columns: 1fr;
+  }
+}
+
+.review-editor__preview {
+  border: 2px inset var(--win-face);
+  background: var(--win-light);
+  padding: 8px;
+  overflow-y: auto;
+}
+
+.review-editor__preview-label {
+  font-size: 10px;
+  font-weight: bold;
+  color: var(--win-text-muted);
+  text-transform: uppercase;
+  margin-bottom: 6px;
+  border-bottom: 1px solid var(--win-shadow);
+  padding-bottom: 2px;
+}
+
+.review-editor__actions {
+  display: flex;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+/* 마크다운/HTML 렌더링 결과 타이포그래피 */
+.review-viewer {
+  line-height: 1.6;
+}
+
+.review-viewer--text {
+  white-space: pre-wrap;
+  font-family: inherit;
+  margin: 0;
+}
+
+.review-viewer :first-child {
+  margin-top: 0;
+}
+
+.review-viewer h1,
+.review-viewer h2,
+.review-viewer h3,
+.review-viewer h4 {
+  border-bottom: 2px groove var(--win-face);
+  padding-bottom: 4px;
+}
+
+.review-viewer blockquote {
+  margin: 8px 0;
+  padding: 4px 10px;
+  border-left: 4px solid var(--win-shadow);
+  background: var(--win-face-light);
+  color: var(--win-text-muted);
+}
+
+.review-viewer code {
+  background: var(--win-face-light);
+  border: 1px solid var(--win-shadow);
+  padding: 0 4px;
+  font-family: 'Consolas', monospace;
+}
+
+.review-viewer pre {
+  background: #000000;
+  color: #00ff00;
+  border: 2px inset var(--win-face);
+  padding: 8px;
+  overflow-x: auto;
+}
+
+.review-viewer pre code {
+  background: none;
+  border: none;
+  padding: 0;
+  color: inherit;
+}
+
+.review-viewer table {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+.review-viewer th,
+.review-viewer td {
+  border: 1px solid var(--win-shadow);
+  padding: 4px 8px;
+}
+
+.review-viewer th {
+  background: var(--win-face);
+}
+
+.review-viewer img {
+  max-width: 100%;
+}
+
+.review-viewer hr {
+  border: none;
+  border-top: 2px groove var(--win-face);
+}
+
+/* ====== 감상문 빠른 작성 창 ====== */
+.review-quick {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.review-quick--empty {
+  align-items: center;
+  text-align: center;
+  padding: 30px 10px;
+  gap: 12px;
+}
+
+.review-quick__select {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 12px;
+  font-weight: bold;
+}
+
+.review-quick__hint {
+  color: var(--win-text-muted);
+}
+
+.review-quick__saved {
+  color: #145214;
+  font-weight: bold;
+  border: 1px solid #145214;
+  background: #eaffea;
+  padding: 3px 8px;
+  width: fit-content;
+}
+
+.review-quick__active-book {
+  border: 2px groove var(--win-face);
+  background: var(--win-light);
+  padding: 6px 10px;
+  margin: 0;
+}
+
+.review-quick__another {
+  align-self: flex-start;
+}
