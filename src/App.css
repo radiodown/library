@@ -1814,3 +1814,68 @@
   margin: 0 10px 10px auto;
   padding: 2px 16px;
 }
+
+/* 이스터에그: 시계를 빠르게 눌러 여는 크레딧 */
+.credits {
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.credits__head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.credits__98 {
+  color: var(--win-title-start);
+  font-style: italic;
+}
+
+.credits__screen {
+  height: 180px;
+  overflow: hidden;
+  background: #000;
+  color: #c0ffc0;
+  border: 2px inset var(--win-face);
+  text-align: center;
+  font-family: 'Consolas', monospace;
+  font-size: 13px;
+}
+
+.credits__roll {
+  padding-top: 180px;
+  animation: credits-scroll 22s linear infinite;
+}
+
+.credits__roll p {
+  margin: 0 0 18px;
+}
+
+.credits__h {
+  color: #ffe066;
+  font-weight: bold;
+}
+
+.credits__buttons {
+  display: flex;
+  justify-content: flex-end;
+}
+
+@keyframes credits-scroll {
+  to {
+    transform: translateY(-100%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .credits__screen {
+    overflow: auto;
+  }
+  .credits__roll {
+    animation: none;
+    padding-top: 8px;
+  }
+}

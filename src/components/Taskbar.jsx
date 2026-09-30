@@ -17,10 +17,11 @@ function StartLogo() {
  * 하단 작업 표시줄. 시작 메뉴, 열려 있는 창 목록, 시계를 보여줍니다.
  * menuItems: { icon, label, onClick } 또는 { separator: true } 배열
  */
-export default function Taskbar({ windows, onToggle, menuItems = [] }) {
+export default function Taskbar({ windows, onToggle, menuItems = [], onClockEasterEgg }) {
   const [now, setNow] = useState(new Date())
   const [menuOpen, setMenuOpen] = useState(false)
   const startRef = useRef(null)
+  const clockClicksRef = useRef([]) // 최근 시계 클릭 시각들
 
   useEffect(() => {
     const timer = setInterval(() => setNow(new Date()), 30_000)
@@ -108,7 +109,20 @@ export default function Taskbar({ windows, onToggle, menuItems = [] }) {
         ))}
       </div>
 
-      <div className="taskbar__clock">
+      <div
+        className="taskbar__clock"
+        onClick={() => {
+          // 3초 안에 5번 누르면 이스터에그
+          const t = Date.now()
+          const recent = [...clockClicksRef.current, t].filter((c) => t - c < 3000)
+          if (recent.length >= 5) {
+            clockClicksRef.current = []
+            onClockEasterEgg?.()
+          } else {
+            clockClicksRef.current = recent
+          }
+        }}
+      >
         {now.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })}
       </div>
     </div>

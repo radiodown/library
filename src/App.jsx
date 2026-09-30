@@ -15,6 +15,7 @@ import QuoteOfDayWindow from './components/QuoteOfDayWindow'
 import MobileLibrary from './components/MobileLibrary'
 import MobileRanking from './components/MobileRanking'
 import MobileOpenPrompt from './components/MobileOpenPrompt'
+import CreditsWindow from './components/CreditsWindow'
 import DriveStatusToast from './components/DriveStatusToast'
 import TrashWindow from './components/TrashWindow'
 import PowerScreen from './components/PowerScreen'
@@ -145,6 +146,21 @@ export default function App() {
       initialPosition: { x: 120, y: 80 },
       initialSize: { width: 760, height: 520 },
     })
+
+  // 시계를 빠르게 여러 번 누르면 나오는 크레딧(이스터에그)
+  const openCreditsWindow = () => {
+    const width = Math.min(340, window.innerWidth - 24)
+    openWindow('credits', {
+      title: 'Library98 정보',
+      icon: 'library',
+      dialog: true,
+      initialPosition: {
+        x: Math.max(12, (window.innerWidth - width) / 2),
+        y: Math.max(24, window.innerHeight / 2 - 190),
+      },
+      initialSize: { width, height: 0 },
+    })
+  }
 
   // Windows 98 알림창처럼 작은 팝업을 화면 가운데쯤에 띄웁니다. PC와 모바일 모두 같습니다.
   const openQuoteOfDayWindow = () => {
@@ -360,6 +376,15 @@ export default function App() {
         />
       )
     }
+    if (w.id === 'credits') {
+      return (
+        <CreditsWindow
+          bookCount={isReady ? libraryDb.books.length : null}
+          quoteCount={libraryDb.quotes.length}
+          onClose={() => closeWindow(w.id)}
+        />
+      )
+    }
     if (w.id === 'quote-of-day') {
       return (
         <QuoteOfDayWindow
@@ -481,6 +506,7 @@ export default function App() {
       ))}
 
       <Taskbar windows={windows} onToggle={handleToggleFromTaskbar} menuItems={isMobile ? mobileMenuItems : startMenuItems}
+        onClockEasterEgg={openCreditsWindow}
       />
     </div>
 
