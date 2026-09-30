@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useDialog } from './dialogContext'
 
 /** 인용구 한 건을 입력/수정하는 인라인 폼. Ctrl/⌘+Enter로도 저장할 수 있습니다. */
 function QuoteForm({ initial, onSave, onCancel }) {
@@ -61,8 +62,10 @@ export default function QuoteList({ readOnly = false, book, quotes, saveQuote, r
     setEditing(null)
   }
 
-  const handleDelete = (quote) => {
-    if (!window.confirm('이 인용구를 삭제할까요?')) return
+  const dialog = useDialog()
+
+  const handleDelete = async (quote) => {
+    if (!(await dialog.confirm('이 인용구를 삭제할까요?', { title: '인용구 삭제', okLabel: '삭제' }))) return
     removeQuote(quote.id)
   }
 

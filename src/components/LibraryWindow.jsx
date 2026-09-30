@@ -5,6 +5,7 @@ import BookDetail from './BookDetail'
 import BookForm from './BookForm'
 import PixelIcon from './PixelIcon'
 import MenuBar from './MenuBar'
+import { useDialog } from './dialogContext'
 
 /** "서재" 창의 내용: DB 파일 관리 툴바 + 책 목록/상세/감상문. */
 export default function LibraryWindow({
@@ -60,9 +61,15 @@ export default function LibraryWindow({
     setSelectedBookId(id)
   }
 
-  const handleDeleteBook = () => {
+  const dialog = useDialog()
+
+  const handleDeleteBook = async () => {
     if (!selectedBook) return
-    if (!window.confirm(`"${selectedBook.title}"을(를) 휴지통으로 보낼까요? 감상문, 회차, 인용구도 함께 옮겨지며 휴지통에서 복원할 수 있습니다.`)) return
+    const ok = await dialog.confirm(
+      `"${selectedBook.title}"을(를) 휴지통으로 보낼까요? 감상문, 회차, 인용구도 함께 옮겨지며 휴지통에서 복원할 수 있습니다.`,
+      { title: '휴지통으로 보내기', okLabel: '휴지통으로' },
+    )
+    if (!ok) return
     removeBook(selectedBook.id)
     setSelectedBookId(null)
   }

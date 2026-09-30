@@ -2507,3 +2507,64 @@
   border-color: #808080 #ffffff #ffffff #808080;
   background: var(--win-face);
 }
+
+/* ====== Windows 98 메시지 상자 (alert/confirm 대체) ====== */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100001; /* 토스트(100000)와 모든 창 위. 뒤쪽 클릭을 막습니다 */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px;
+}
+
+.modal98 {
+  width: 360px;
+  max-width: 100%;
+  background: var(--win-face);
+  color: var(--win-text);
+  border: 2px outset var(--win-light);
+  box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.35);
+}
+
+.modal98__titlebar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 4px;
+  background: linear-gradient(90deg, var(--win-title-start), var(--win-title-end));
+  color: var(--win-title-text);
+}
+
+.modal98__title {
+  flex: 1;
+  font-size: 13px;
+  font-weight: bold;
+}
+
+.modal98__body {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 18px 16px 12px;
+}
+
+.modal98__message {
+  margin: 0;
+  flex: 1;
+  min-width: 0;
+  white-space: pre-line; /* 메시지의 줄바꿈을 그대로 보여 줍니다 */
+  word-break: break-word;
+}
+
+.modal98__buttons {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  padding: 6px 12px 12px;
+}
+
+.modal98__buttons .quote-dialog__btn {
+  min-width: 76px;
+}

@@ -1,15 +1,18 @@
 import { useState } from 'react'
 import { todayString } from '../utils/stats'
+import { useDialog } from './dialogContext'
 
 /** 다시 읽기(회차) 한 건을 입력/수정하는 인라인 폼. */
 function ReadingForm({ initial, onSave, onCancel }) {
   const [form, setForm] = useState(initial)
   const update = (patch) => setForm((prev) => ({ ...prev, ...patch }))
 
+  const dialog = useDialog()
+
   const handleSubmit = (e) => {
     e.preventDefault()
     if (!form.dateUnknown && form.startDate && form.finishDate && form.finishDate < form.startDate) {
-      window.alert('완독일이 시작일보다 빠를 수 없습니다.')
+      dialog.alert('완독일이 시작일보다 빠를 수 없습니다.', { title: '날짜 확인' })
       return
     }
     onSave({
@@ -115,8 +118,10 @@ export default function ReadingHistory({ readOnly = false, book, readings, saveR
     setEditing(null)
   }
 
-  const handleDelete = (reading) => {
-    if (!window.confirm('이 회차 기록을 삭제할까요?')) return
+  const dialog = useDialog()
+
+  const handleDelete = async (reading) => {
+    if (!(await dialog.confirm('이 회차 기록을 삭제할까요?', { title: '회차 삭제', okLabel: '삭제' }))) return
     removeReading(reading.id)
   }
 

@@ -1,4 +1,5 @@
 import { Fragment } from 'react'
+import { useDialog } from './dialogContext'
 import { toPreviewText } from '../utils/reviewPreview'
 import ReadingHistory from './ReadingHistory'
 import QuoteList from './QuoteList'
@@ -84,8 +85,10 @@ export default function BookDetail({
     }
   })()
 
-  const handleDeleteReview = (id) => {
-    if (!window.confirm('이 감상문을 삭제할까요?')) return
+  const dialog = useDialog()
+
+  const handleDeleteReview = async (id) => {
+    if (!(await dialog.confirm('이 감상문을 삭제할까요?', { title: '감상문 삭제', okLabel: '삭제' }))) return
     removeReview(id)
   }
 

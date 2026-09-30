@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import PixelIcon from './PixelIcon'
+import { useDialog } from './dialogContext'
 
 const CRUMPLE_MS = 1000 // 구겨지는 애니메이션(항목별 시차 포함)이 끝나는 시간
 
@@ -17,6 +18,7 @@ export default function TrashWindow({
 }) {
   const [emptying, setEmptying] = useState(false)
   const [notice, setNotice] = useState('')
+  const dialog = useDialog()
 
   if (!isReady) {
     return (
@@ -34,14 +36,22 @@ export default function TrashWindow({
     setNotice(`"${book.title}"을(를) 서재로 복원했습니다.`)
   }
 
-  const handlePurge = (book) => {
-    if (!window.confirm(`"${book.title}"을(를) 완전히 삭제할까요? 감상문, 회차, 인용구도 함께 사라지며 되돌릴 수 없습니다.`)) return
+  const handlePurge = async (book) => {
+    const ok = await dialog.confirm(
+      `"${book.title}"을(를) 완전히 삭제할까요? 감상문, 회차, 인용구도 함께 사라지며 되돌릴 수 없습니다.`,
+      { title: '완전히 삭제', okLabel: '삭제' },
+    )
+    if (!ok) return
     purgeBook(book.id)
     setNotice(`"${book.title}"을(를) 영구 삭제했습니다.`)
   }
 
-  const handleEmpty = () => {
-    if (!window.confirm(`휴지통의 책 ${trashedBooks.length}권을 모두 완전히 삭제할까요? 되돌릴 수 없습니다.`)) return
+  const handleEmpty = async () => {
+    const ok = await dialog.confirm(
+      `휴지통의 책 ${trashedBooks.length}권을 모두 완전히 삭제할까요? 되돌릴 수 없습니다.`,
+      { title: '휴지통 비우기', okLabel: '비우기' },
+    )
+    if (!ok) return
     setNotice('')
     setEmptying(true)
     // 종이가 구겨지는 애니메이션이 끝난 뒤 실제로 비웁니다. (움직임 줄이기 설정이면 바로)

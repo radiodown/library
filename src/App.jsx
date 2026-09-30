@@ -15,6 +15,7 @@ import QuoteOfDayWindow from './components/QuoteOfDayWindow'
 import MobileLibrary from './components/MobileLibrary'
 import MobileNextBooks from './components/MobileNextBooks'
 import MobileOpenPrompt from './components/MobileOpenPrompt'
+import { useDialog } from './components/dialogContext'
 import SearchWindow from './components/SearchWindow'
 import LibraryProperties from './components/LibraryProperties'
 import CreditsWindow from './components/CreditsWindow'
@@ -264,9 +265,11 @@ export default function App() {
       properties: openPropertiesWindow,
     })[name]?.()
 
+  const dialog = useDialog()
+
   const handleSaveIcon = () => {
     if (!isReady) {
-      window.alert('먼저 "서재" 아이콘으로 서재를 열거나 새로 만들어주세요.')
+      dialog.alert('먼저 "서재" 아이콘으로 서재를 열거나 새로 만들어주세요.', { title: '서재 저장' })
       return
     }
     saveLibrary(false)

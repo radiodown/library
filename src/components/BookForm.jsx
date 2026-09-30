@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { searchBooks } from '../api/kakaoBooks'
 import { todayString } from '../utils/stats'
 import { findDuplicateBook } from '../utils/duplicates'
+import { useDialog } from './dialogContext'
 import PixelIcon from './PixelIcon'
 
 const EMPTY_BOOK = {
@@ -105,14 +106,17 @@ export default function BookForm({
     }
   }
 
-  const handleSubmit = (e) => {
+  const dialog = useDialog()
+
+  const handleSubmit = async (e) => {
     e.preventDefault()
     if (!form.title.trim()) return
     if (
       duplicate &&
-      !window.confirm(
+      !(await dialog.confirm(
         `"${duplicate.title}"이(가) 이미 서재에 있습니다. 그래도 새 책으로 추가할까요?\n(다시 읽은 책이라면 취소하고 기존 책에서 "다시 읽기"를 추가하세요.)`,
-      )
+        { title: '중복된 책', okLabel: '추가' },
+      ))
     ) {
       return
     }
