@@ -133,64 +133,62 @@ export default function BookForm({
     <form className="book-form" onSubmit={handleSubmit}>
       <h3>{heading ?? (book ? '책 정보 수정' : '새 책 추가')}</h3>
 
-      {!book && (
-        <div className="book-search">
-          <div className="book-search__bar">
-            <input
-              value={query}
-              onChange={(e) => {
-                setQuery(e.target.value)
-                setResults(null) // 검색어를 고치면 이전 결과는 무효 → 다음 Enter는 새 검색
-              }}
-              onKeyDown={handleSearchKeyDown}
-              placeholder="도서 검색 (제목, 저자, ISBN)"
-            />
-            <button type="button" onClick={handleSearch} disabled={searching}>
-              {searching ? '검색 중...' : '검색'}
-            </button>
-          </div>
-          {searchError && <p className="book-search__msg">{searchError}</p>}
-          {results && results.length === 0 && (
-            <p className="book-search__msg">검색 결과가 없습니다.</p>
-          )}
-          {results && results.length > 0 && (
-            <ul className="book-search__results">
-              {results.map((r, i) => (
-                <li
-                  key={r.id}
-                  ref={i === activeIndex ? activeItemRef : null}
-                  className={i === activeIndex ? 'is-active' : ''}
-                >
-                  <button
-                    type="button"
-                    tabIndex={-1}
-                    onClick={() => handlePick(r)}
-                    onMouseEnter={() => setActiveIndex(i)}
-                  >
-                    {r.coverUrl ? (
-                      <img src={r.coverUrl} alt="" />
-                    ) : (
-                      <span className="book-search__nocover" />
-                    )}
-                    <span className="book-search__info">
-                      <strong>
-                        {r.title}
-                        {findDuplicateBook(books, r) && (
-                          <span className="book-search__dup">서재에 있음</span>
-                        )}
-                      </strong>
-                      <span>{r.author || '저자 미상'}</span>
-                      <span>
-                        {[r.publisher, r.publishedDate].filter(Boolean).join(' · ')}
-                      </span>
-                    </span>
-                  </button>
-                </li>
-              ))}
-            </ul>
-          )}
+      <div className="book-search">
+        <div className="book-search__bar">
+          <input
+            value={query}
+            onChange={(e) => {
+              setQuery(e.target.value)
+              setResults(null) // 검색어를 고치면 이전 결과는 무효 → 다음 Enter는 새 검색
+            }}
+            onKeyDown={handleSearchKeyDown}
+            placeholder="도서 검색 (제목, 저자, ISBN)"
+          />
+          <button type="button" onClick={handleSearch} disabled={searching}>
+            {searching ? '검색 중...' : '검색'}
+          </button>
         </div>
-      )}
+        {searchError && <p className="book-search__msg">{searchError}</p>}
+        {results && results.length === 0 && (
+          <p className="book-search__msg">검색 결과가 없습니다.</p>
+        )}
+        {results && results.length > 0 && (
+          <ul className="book-search__results">
+            {results.map((r, i) => (
+              <li
+                key={r.id}
+                ref={i === activeIndex ? activeItemRef : null}
+                className={i === activeIndex ? 'is-active' : ''}
+              >
+                <button
+                  type="button"
+                  tabIndex={-1}
+                  onClick={() => handlePick(r)}
+                  onMouseEnter={() => setActiveIndex(i)}
+                >
+                  {r.coverUrl ? (
+                    <img src={r.coverUrl} alt="" />
+                  ) : (
+                    <span className="book-search__nocover" />
+                  )}
+                  <span className="book-search__info">
+                    <strong>
+                      {r.title}
+                      {findDuplicateBook(books, r, book?.id) && (
+                        <span className="book-search__dup">서재에 있음</span>
+                      )}
+                    </strong>
+                    <span>{r.author || '저자 미상'}</span>
+                    <span>
+                      {[r.publisher, r.publishedDate].filter(Boolean).join(' · ')}
+                    </span>
+                  </span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
 
       {duplicate && (
         <p className="book-form__warn" role="alert">
