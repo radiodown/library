@@ -330,6 +330,7 @@ export default function App() {
       return (
         <ReviewQuickWindow
           isReady={libraryDb.isReady}
+          books={libraryDb.books}
           addOrUpdateBook={libraryDb.addOrUpdateBook}
           saveReview={libraryDb.saveReview}
           onOpenLibrary={openLibraryWindow}

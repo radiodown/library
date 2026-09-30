@@ -16,12 +16,23 @@ const EMPTY_BOOK = {
   tags: [],
 }
 
-/** 책 추가/수정 폼. book이 없으면 새 책 추가 모드입니다. */
-export default function BookForm({ book, books = [], onSave, onCancel }) {
+/**
+ * 책 추가/수정 폼. book이 없으면 새 책 추가 모드입니다.
+ * defaults: 새 책 추가 때 기본값을 덮어쓸 값, heading/submitLabel: 다른 화면에서 재사용할 때의 문구
+ */
+export default function BookForm({
+  book,
+  books = [],
+  defaults,
+  heading,
+  submitLabel = '저장',
+  onSave,
+  onCancel,
+}) {
   const [form, setForm] = useState(() => ({
     ...EMPTY_BOOK,
     // 새 책은 시작일/완독일을 오늘로 채웁니다. 수정할 때는 저장된 값을 그대로 씁니다.
-    ...(book ? {} : { startDate: todayString(), finishDate: todayString() }),
+    ...(book ? {} : { startDate: todayString(), finishDate: todayString(), ...defaults }),
     ...book,
     tagsText: (book?.tags || []).join(', '),
   }))
@@ -111,7 +122,7 @@ export default function BookForm({ book, books = [], onSave, onCancel }) {
 
   return (
     <form className="book-form" onSubmit={handleSubmit}>
-      <h3>{book ? '책 정보 수정' : '새 책 추가'}</h3>
+      <h3>{heading ?? (book ? '책 정보 수정' : '새 책 추가')}</h3>
 
       {!book && (
         <div className="book-search">
@@ -256,11 +267,13 @@ export default function BookForm({ book, books = [], onSave, onCancel }) {
 
       <div className="book-form__actions">
         <button type="submit" ref={saveButtonRef}>
-          저장
+          {submitLabel}
         </button>
-        <button type="button" onClick={onCancel}>
-          취소
-        </button>
+        {onCancel && (
+          <button type="button" onClick={onCancel}>
+            취소
+          </button>
+        )}
       </div>
     </form>
   )

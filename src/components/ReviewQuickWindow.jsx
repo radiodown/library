@@ -1,16 +1,14 @@
 import { useState } from 'react'
+import BookForm from './BookForm'
 import ReviewEditor from './ReviewEditor'
 import PixelIcon from './PixelIcon'
-
-const EMPTY_FORM = { title: '', author: '', status: 'reading' }
 
 /**
  * "감상문" 창의 내용.
  * 기존 책 목록에서 찾아 고르게 하지 않고, 책 정보를 바로 추가한 뒤
  * 곧바로 그 책의 감상문을 쓰는 흐름으로 동작합니다.
  */
-export default function ReviewQuickWindow({ isReady, addOrUpdateBook, saveReview, onOpenLibrary }) {
-  const [form, setForm] = useState(EMPTY_FORM)
+export default function ReviewQuickWindow({ isReady, books, addOrUpdateBook, saveReview, onOpenLibrary }) {
   const [activeBook, setActiveBook] = useState(null) // { id, title }
   const [savedAt, setSavedAt] = useState(null)
   const [editorKey, setEditorKey] = useState(0)
@@ -26,16 +24,9 @@ export default function ReviewQuickWindow({ isReady, addOrUpdateBook, saveReview
     )
   }
 
-  const handleCreateBook = (e) => {
-    e.preventDefault()
-    if (!form.title.trim()) return
-    const id = addOrUpdateBook({
-      title: form.title.trim(),
-      author: form.author.trim(),
-      status: form.status,
-      tags: [],
-    })
-    setActiveBook({ id, title: form.title.trim() })
+  const handleCreateBook = (book) => {
+    const id = addOrUpdateBook(book)
+    setActiveBook({ id, title: book.title.trim() })
     setSavedAt(null)
   }
 
@@ -47,7 +38,6 @@ export default function ReviewQuickWindow({ isReady, addOrUpdateBook, saveReview
 
   const handleStartAnotherBook = () => {
     setActiveBook(null)
-    setForm(EMPTY_FORM)
     setSavedAt(null)
   }
 
@@ -58,37 +48,13 @@ export default function ReviewQuickWindow({ isReady, addOrUpdateBook, saveReview
           어떤 책의 감상문을 쓸까요? 책 정보를 간단히 입력하면 바로 감상문을 쓸 수 있어요.
           (자세한 정보는 나중에 "서재" 창에서 언제든 보완할 수 있습니다.)
         </p>
-        <form className="book-form" onSubmit={handleCreateBook}>
-          <label>
-            제목 *
-            <input
-              value={form.title}
-              onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
-              autoFocus
-              required
-            />
-          </label>
-          <label>
-            저자
-            <input
-              value={form.author}
-              onChange={(e) => setForm((f) => ({ ...f, author: e.target.value }))}
-            />
-          </label>
-          <label>
-            상태
-            <select
-              value={form.status}
-              onChange={(e) => setForm((f) => ({ ...f, status: e.target.value }))}
-            >
-              <option value="reading">읽는 중</option>
-              <option value="finished">완독</option>
-            </select>
-          </label>
-          <div className="book-form__actions">
-            <button type="submit">책 추가하고 감상문 쓰기</button>
-          </div>
-        </form>
+        <BookForm
+          books={books}
+          defaults={{ status: 'reading' }}
+          heading="새 책 추가"
+          submitLabel="책 추가하고 감상문 쓰기"
+          onSave={handleCreateBook}
+        />
       </div>
     )
   }
