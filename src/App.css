@@ -2178,3 +2178,103 @@
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
+
+/* ====== 바탕화면 아이콘 오른쪽 클릭 메뉴 ====== */
+.context-menu {
+  position: fixed;
+  z-index: 99999;
+  min-width: 150px;
+  margin: 0;
+  padding: 2px;
+  list-style: none;
+  background: var(--win-face);
+  color: var(--win-text);
+  border: 2px outset var(--win-light);
+  box-shadow: 2px 2px 0 var(--win-dark-shadow);
+}
+
+.context-menu__item {
+  display: block;
+  width: 100%;
+  padding: 4px 24px 4px 20px;
+  border: none;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: default;
+}
+
+.context-menu__item.is-bold {
+  font-weight: bold;
+}
+
+.context-menu__item:hover,
+.context-menu__item:focus-visible {
+  background: var(--win-selection);
+  color: var(--win-selection-text);
+}
+
+.context-menu__separator {
+  height: 0;
+  margin: 3px 2px;
+  border-top: 1px solid var(--win-shadow);
+  border-bottom: 1px solid var(--win-light);
+}
+
+/* ====== 서재 속성 ====== */
+.props {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px;
+  font-size: 13px;
+}
+
+.props__head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.props__name {
+  word-break: break-all;
+}
+
+.props__list {
+  margin: 0;
+}
+
+.props__row {
+  display: flex;
+  gap: 8px;
+  padding: 1px 0;
+}
+
+.props__row dt {
+  flex: none;
+  width: 76px;
+  color: var(--win-text-muted);
+}
+
+.props__row dd {
+  margin: 0;
+  min-width: 0;
+  word-break: break-word;
+}
+
+.props__sep {
+  margin: 6px 0;
+  border: none;
+  border-top: 1px solid var(--win-shadow);
+  border-bottom: 1px solid var(--win-light);
+}
+
+.props__empty {
+  margin: 0;
+}
+
+.props__buttons {
+  display: flex;
+  justify-content: flex-end;
+}

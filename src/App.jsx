@@ -16,6 +16,7 @@ import MobileLibrary from './components/MobileLibrary'
 import MobileNextBooks from './components/MobileNextBooks'
 import MobileOpenPrompt from './components/MobileOpenPrompt'
 import SearchWindow from './components/SearchWindow'
+import LibraryProperties from './components/LibraryProperties'
 import CreditsWindow from './components/CreditsWindow'
 import DriveStatusToast from './components/DriveStatusToast'
 import TrashWindow from './components/TrashWindow'
@@ -113,6 +114,21 @@ export default function App() {
     })
 
   const searchBy = (kind, name) => openSearchWindow({ kind, name, nonce: Date.now() })
+
+  // 바탕화면 서재 아이콘의 "속성". Windows 속성 대화상자처럼 작은 팝업으로 띄웁니다.
+  const openPropertiesWindow = () => {
+    const width = Math.min(380, window.innerWidth - 24)
+    openWindow('properties', {
+      title: '서재 속성',
+      icon: 'library',
+      dialog: true,
+      initialPosition: {
+        x: Math.max(12, (window.innerWidth - width) / 2),
+        y: Math.max(24, window.innerHeight / 2 - 210),
+      },
+      initialSize: { width, height: 0 },
+    })
+  }
 
   const openTrashWindow = () =>
     openWindow('trash', {
@@ -408,6 +424,25 @@ export default function App() {
         />
       )
     }
+    if (w.id === 'properties') {
+      return (
+        <LibraryProperties
+          isReady={libraryDb.isReady}
+          fileName={libraryDb.fileName}
+          saveTarget={libraryDb.saveTarget}
+          isDirty={libraryDb.isDirty}
+          lastSaved={libraryDb.lastSaved}
+          books={libraryDb.books}
+          trashedBooks={libraryDb.trashedBooks}
+          readings={libraryDb.readings}
+          quotes={libraryDb.quotes}
+          nextBookIds={libraryDb.nextBookIds}
+          reviewsVersion={libraryDb.reviewsVersion}
+          getDbInfo={libraryDb.getDbInfo}
+          onClose={() => closeWindow(w.id)}
+        />
+      )
+    }
     if (w.id === 'credits') {
       return (
         <CreditsWindow
@@ -509,7 +544,16 @@ export default function App() {
           <>
             <DesktopIcon icon="floppy" label="서재 저장" onActivate={handleSaveIcon} />
             <DesktopIcon icon="folder-open" label="서재 불러오기" onActivate={openLibrary} />
-            <DesktopIcon icon="library" label="서재" onActivate={openLibraryWindow} />
+            <DesktopIcon
+              icon="library"
+              label="서재"
+              onActivate={openLibraryWindow}
+              contextItems={[
+                { label: '열기', bold: true, onClick: openLibraryWindow },
+                { separator: true },
+                { label: '속성', onClick: openPropertiesWindow },
+              ]}
+            />
             <DesktopIcon icon="notepad" label="감상문" onActivate={openReviewWindow} />
             <DesktopIcon
               icon={libraryDb.trashedBooks.length ? 'trash-full' : 'trash'}

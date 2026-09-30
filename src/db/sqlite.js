@@ -117,7 +117,33 @@ export async function loadDatabaseFromBuffer(buffer) {
 
 /** DB를 바이너리(Uint8Array)로 내보냅니다. 파일로 저장할 때 사용합니다. */
 export function exportDatabase(db) {
-  return db.export()
+  const bytes = db.export()
+  // sql.js의 export()는 DB를 닫았다 다시 열어 PRAGMA를 기본값으로 되돌립니다.
+  // 외래키가 꺼진 채로 두면 저장한 뒤부터 책을 지워도 딸린 데이터가 함께 지워지지 않으므로 다시 켭니다.
+  db.run('PRAGMA foreign_keys = ON')
+  return bytes
+}
+
+/** 서재 속성 창에 보여 줄 DB 정보. export()를 쓰지 않고 페이지 수로 크기를 셉니다. */
+export function getDbInfo(db) {
+  const [{ page_count: pages }] = queryAll(db, 'PRAGMA page_count')
+  const [{ page_size: pageSize }] = queryAll(db, 'PRAGMA page_size')
+  const [reviews] = queryAll(
+    db,
+    `SELECT COUNT(*) AS c, COALESCE(SUM(LENGTH(content)), 0) AS chars FROM reviews
+     WHERE book_id IN (SELECT id FROM books WHERE deleted_at IS NULL)`,
+  )
+  const [dates] = queryAll(
+    db,
+    'SELECT MIN(created_at) AS first, MAX(updated_at) AS last FROM books WHERE deleted_at IS NULL',
+  )
+  return {
+    bytes: pages * pageSize,
+    reviewCount: reviews.c,
+    reviewChars: reviews.chars,
+    firstCreated: dates.first,
+    lastUpdated: dates.last,
+  }
 }
 
 function queryAll(db, sql, params = []) {

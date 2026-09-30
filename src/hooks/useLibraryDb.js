@@ -12,6 +12,7 @@ import {
   emptyTrash as emptyTrashRows,
   getReviewsForBook,
   getAllReviews,
+  getDbInfo as queryDbInfo,
   upsertReview,
   deleteReview,
   getReviewCounts as queryReviewCounts,
@@ -381,6 +382,11 @@ export function useLibraryDb({ rememberLast = false } = {}) {
     return getAllReviews(dbRef.current)
   }, [])
 
+  const getDbInfo = useCallback(() => {
+    if (!dbRef.current) return null
+    return queryDbInfo(dbRef.current)
+  }, [])
+
   const getReviewCounts = useCallback(() => {
     if (!dbRef.current) return {}
     return queryReviewCounts(dbRef.current)
@@ -438,6 +444,7 @@ export function useLibraryDb({ rememberLast = false } = {}) {
     removeBook,
     listReviews,
     listAllReviews,
+    getDbInfo,
     getReviewCounts,
     saveReview,
     removeReview,
