@@ -14,6 +14,8 @@ export default function LibraryWindow({
   fileName,
   lastSaved,
   canAutoSave,
+  saveTarget,
+  driveSupported,
   books,
   fsaSupported,
   newLibrary,
@@ -65,6 +67,8 @@ export default function LibraryWindow({
           fileName={fileName}
           lastSaved={lastSaved}
           canAutoSave={canAutoSave}
+          saveTarget={saveTarget}
+          driveSupported={driveSupported}
           fsaSupported={fsaSupported}
           onNew={newLibrary}
           onOpen={openLibrary}

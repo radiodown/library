@@ -6,6 +6,8 @@ export default function MobileOpenPrompt({
   error,
   lastLibrary,
   openLibrary,
+  openFromDrive,
+  driveSupported,
   restoreLastLibrary,
 }) {
   return (
@@ -32,6 +34,15 @@ export default function MobileOpenPrompt({
           서재 파일 열기
         </span>
       </button>
+
+      {driveSupported && (
+        <button type="button" onClick={openFromDrive} disabled={busy}>
+          <span>
+            <PixelIcon name="folder-open" className="pixel-icon--inline" />
+            Google Drive에서 불러오기
+          </span>
+        </button>
+      )}
 
       {error && (
         <p className="m-error">

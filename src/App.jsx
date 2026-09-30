@@ -15,6 +15,7 @@ import QuoteOfDayWindow from './components/QuoteOfDayWindow'
 import MobileLibrary from './components/MobileLibrary'
 import MobileRanking from './components/MobileRanking'
 import MobileOpenPrompt from './components/MobileOpenPrompt'
+import DriveStatusToast from './components/DriveStatusToast'
 import TrashWindow from './components/TrashWindow'
 import PowerScreen from './components/PowerScreen'
 import ShutdownDialog from './components/ShutdownDialog'
@@ -232,6 +233,13 @@ export default function App() {
     { icon: 'document-new', label: '새 서재 만들기', onClick: libraryDb.newLibrary },
     { icon: 'folder-open', label: '서재 불러오기', onClick: openLibrary },
     { icon: 'floppy', label: '서재 저장', onClick: handleSaveIcon },
+    ...(libraryDb.driveSupported
+      ? [
+          { separator: true },
+          { icon: 'folder-open', label: 'Google Drive에서 불러오기', onClick: libraryDb.openFromDrive },
+          { icon: 'floppy', label: 'Google Drive에 저장', onClick: libraryDb.saveToDrive },
+        ]
+      : []),
     { separator: true },
     { icon: 'computer', label: '시스템 종료...', onClick: openShutdownDialog },
   ]
@@ -244,6 +252,9 @@ export default function App() {
     { icon: 'quote', label: '오늘의 인용구', onClick: openQuoteOfDayWindow },
     { separator: true },
     { icon: 'folder-open', label: '서재 파일 열기', onClick: openLibrary },
+    ...(libraryDb.driveSupported
+      ? [{ icon: 'folder-open', label: 'Google Drive에서 불러오기', onClick: libraryDb.openFromDrive }]
+      : []),
     ...(libraryDb.lastLibrary
       ? [{ icon: 'book-open', label: '마지막 서재 불러오기', onClick: libraryDb.restoreLastLibrary }]
       : []),
@@ -262,6 +273,8 @@ export default function App() {
             error={libraryDb.error}
             lastLibrary={libraryDb.lastLibrary}
             openLibrary={openLibrary}
+            openFromDrive={libraryDb.openFromDrive}
+            driveSupported={libraryDb.driveSupported}
             restoreLastLibrary={libraryDb.restoreLastLibrary}
           />
         </div>
@@ -469,6 +482,8 @@ export default function App() {
       <Taskbar windows={windows} onToggle={handleToggleFromTaskbar} menuItems={isMobile ? mobileMenuItems : startMenuItems}
       />
     </div>
+
+    <DriveStatusToast status={libraryDb.driveStatus} onDismiss={libraryDb.dismissDriveStatus} />
 
     <PowerScreen
       state={power}

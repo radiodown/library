@@ -1774,3 +1774,43 @@
   padding-top: 3px;
   padding-bottom: 3px;
 }
+
+/* Google Drive 작업 상태창 */
+.drive-toast {
+  position: fixed;
+  right: 16px;
+  bottom: 48px;
+  z-index: 100000;
+  min-width: 220px;
+  max-width: min(360px, calc(100vw - 32px));
+  background: var(--win-face);
+  color: var(--win-text);
+  border: 2px outset var(--win-light);
+  box-shadow: 2px 2px 0 var(--win-dark-shadow);
+  font-size: 13px;
+}
+
+.drive-toast__title {
+  padding: 2px 6px;
+  background: linear-gradient(90deg, var(--win-title-start), var(--win-title-end));
+  color: var(--win-title-text);
+  font-weight: bold;
+}
+
+.drive-toast__body {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px;
+  word-break: break-word;
+}
+
+.drive-toast--error .drive-toast__body {
+  color: var(--win-danger);
+}
+
+.drive-toast__close {
+  display: block;
+  margin: 0 10px 10px auto;
+  padding: 2px 16px;
+}

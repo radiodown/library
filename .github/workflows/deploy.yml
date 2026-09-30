@@ -31,6 +31,7 @@ jobs:
         env:
           VITE_BASE_PATH: /${{ github.event.repository.name }}/
           VITE_KAKAO_REST_API_KEY: ${{ secrets.KAKAO_REST_API_KEY }}
+          VITE_GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
 
       - uses: actions/upload-pages-artifact@v3
         with:
