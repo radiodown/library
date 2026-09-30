@@ -20,7 +20,6 @@ export default function DataManager({
   canAutoSave,
   fsaSupported,
   driveSupported,
-  onNew,
   onOpen,
   onSave,
 }) {
@@ -38,9 +37,6 @@ export default function DataManager({
   return (
     <div className="data-manager">
       <div className="data-manager__actions">
-        <button onClick={onNew} disabled={busy}>
-          새 서재
-        </button>
         <button onClick={onOpen} disabled={busy}>
           파일 열기
         </button>

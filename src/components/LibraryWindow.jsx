@@ -18,7 +18,6 @@ export default function LibraryWindow({
   driveSupported,
   books,
   fsaSupported,
-  newLibrary,
   openLibrary,
   saveLibrary,
   addOrUpdateBook,
@@ -70,7 +69,6 @@ export default function LibraryWindow({
           saveTarget={saveTarget}
           driveSupported={driveSupported}
           fsaSupported={fsaSupported}
-          onNew={newLibrary}
           onOpen={openLibrary}
           onSave={saveLibrary}
         />
