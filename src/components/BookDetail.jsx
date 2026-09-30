@@ -74,6 +74,11 @@ export default function BookDetail({
         <div className="book-detail__info">
           <h2>{book.title}</h2>
           {book.author && <p className="book-detail__author">{book.author}</p>}
+          {(book.translator || book.publisher) && (
+            <p className="book-detail__meta">
+              {[book.translator && `${book.translator} 옮김`, book.publisher].filter(Boolean).join(' · ')}
+            </p>
+          )}
           <p>
             <span className={`status-badge status-badge--${book.status}`}>{STATUS_LABEL[book.status]}</span>
             {book.rating ? <span className="book-detail__rating">{'★'.repeat(book.rating)}</span> : null}

@@ -1007,6 +1007,12 @@
   margin: 0 0 6px;
 }
 
+.book-detail__meta {
+  color: var(--win-text-muted);
+  font-size: 0.9em;
+  margin: 0 0 6px;
+}
+
 .book-detail__rating {
   color: #b8860b;
   margin-left: 8px;

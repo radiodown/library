@@ -33,6 +33,7 @@ export async function searchBooks(query, signal) {
     id: `${doc.isbn || doc.title}-${i}`,
     title: doc.title || '',
     author: (doc.authors || []).join(', '),
+    translator: (doc.translators || []).join(', '),
     isbn: pickIsbn(doc.isbn),
     coverUrl: doc.thumbnail || '',
     publisher: doc.publisher || '',

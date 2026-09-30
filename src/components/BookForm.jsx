@@ -7,6 +7,8 @@ import PixelIcon from './PixelIcon'
 const EMPTY_BOOK = {
   title: '',
   author: '',
+  translator: '',
+  publisher: '',
   isbn: '',
   coverUrl: '',
   status: 'wishlist',
@@ -70,7 +72,14 @@ export default function BookForm({
   }
 
   const handlePick = (r) => {
-    update({ title: r.title, author: r.author, isbn: r.isbn, coverUrl: r.coverUrl })
+    update({
+      title: r.title,
+      author: r.author,
+      translator: r.translator,
+      publisher: r.publisher,
+      isbn: r.isbn,
+      coverUrl: r.coverUrl,
+    })
     setResults(null)
     // 포커스를 저장 버튼으로 옮겨, 이어서 Enter를 누르면 바로 추가되게 합니다.
     saveButtonRef.current?.focus()
@@ -205,6 +214,16 @@ export default function BookForm({
       <label>
         저자
         <input value={form.author} onChange={(e) => update({ author: e.target.value })} />
+      </label>
+
+      <label>
+        역자
+        <input value={form.translator} onChange={(e) => update({ translator: e.target.value })} />
+      </label>
+
+      <label>
+        출판사
+        <input value={form.publisher} onChange={(e) => update({ publisher: e.target.value })} />
       </label>
 
       <label>

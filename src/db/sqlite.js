@@ -17,6 +17,8 @@ CREATE TABLE IF NOT EXISTS books (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   title TEXT NOT NULL,
   author TEXT,
+  translator TEXT,
+  publisher TEXT,
   isbn TEXT,
   cover_url TEXT,
   status TEXT NOT NULL DEFAULT 'wishlist' CHECK(status IN ('wishlist','reading','finished')),
@@ -77,6 +79,10 @@ function prepareDatabase(db) {
   // 휴지통 기능 이전에 만든 파일에는 deleted_at 컬럼이 없으므로 추가합니다. (CREATE IF NOT EXISTS로는 안 붙음)
   const bookColumns = queryAll(db, 'PRAGMA table_info(books)').map((c) => c.name)
   if (!bookColumns.includes('deleted_at')) db.run('ALTER TABLE books ADD COLUMN deleted_at TEXT')
+  // 역자/출판사 기능 이전에 만든 파일에도 같은 방식으로 컬럼을 추가합니다.
+  ;['translator', 'publisher'].forEach((col) => {
+    if (!bookColumns.includes(col)) db.run(`ALTER TABLE books ADD COLUMN ${col} TEXT`)
+  })
   CHILD_TABLES.forEach((table) => {
     db.run(`DELETE FROM ${table} WHERE book_id NOT IN (SELECT id FROM books)`)
   })
@@ -120,6 +126,8 @@ function parseBookRow(row) {
     id: row.id,
     title: row.title,
     author: row.author || '',
+    translator: row.translator || '',
+    publisher: row.publisher || '',
     isbn: row.isbn || '',
     coverUrl: row.cover_url || '',
     status: row.status,
@@ -172,11 +180,13 @@ export function upsertBook(db, book) {
 
   if (book.id) {
     db.run(
-      `UPDATE books SET title=?, author=?, isbn=?, cover_url=?, status=?, start_date=?, finish_date=?, rating=?, tags=?, updated_at=?
+      `UPDATE books SET title=?, author=?, translator=?, publisher=?, isbn=?, cover_url=?, status=?, start_date=?, finish_date=?, rating=?, tags=?, updated_at=?
        WHERE id=?`,
       [
         book.title,
         book.author || null,
+        book.translator || null,
+        book.publisher || null,
         book.isbn || null,
         book.coverUrl || null,
         book.status,
@@ -192,11 +202,13 @@ export function upsertBook(db, book) {
   }
 
   db.run(
-    `INSERT INTO books (title, author, isbn, cover_url, status, start_date, finish_date, rating, tags, created_at, updated_at)
-     VALUES (?,?,?,?,?,?,?,?,?,?,?)`,
+    `INSERT INTO books (title, author, translator, publisher, isbn, cover_url, status, start_date, finish_date, rating, tags, created_at, updated_at)
+     VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)`,
     [
       book.title,
       book.author || null,
+      book.translator || null,
+      book.publisher || null,
       book.isbn || null,
       book.coverUrl || null,
       book.status,
