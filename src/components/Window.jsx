@@ -17,6 +17,7 @@ export default function Window({
   initialSize = { width: 720, height: 480 },
   minimized = false,
   maximized: maximizedProp = false, // 모바일: 화면(작업표시줄 위)을 꽉 채우고 드래그/크기 조절 없음
+  active = true, // 맨 앞(포커스) 창만 파란 제목 줄, 나머지는 회색 (Windows 98처럼)
   dialog = false, // Windows 98 알림창처럼 작은 팝업: 최소화/크기 조절 없이 닫기만 있고, 모바일에서도 전체 화면이 되지 않음
   onClose,
   onMinimize,
@@ -79,7 +80,7 @@ export default function Window({
 
   return (
     <div
-      className={`win${minimized ? ' win--minimized' : ''}${maximized ? ' win--maximized' : ''}${dialog ? ' win--dialog' : ''}`}
+      className={`win${minimized ? ' win--minimized' : ''}${maximized ? ' win--maximized' : ''}${dialog ? ' win--dialog' : ''}${active ? '' : ' win--inactive'}`}
       style={
         maximized
           ? { zIndex }

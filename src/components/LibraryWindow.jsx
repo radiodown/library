@@ -1,9 +1,10 @@
 import { useState } from 'react'
-import DataManager from './DataManager'
+import SaveStatusBar from './SaveStatusBar'
 import BookList from './BookList'
 import BookDetail from './BookDetail'
 import BookForm from './BookForm'
 import PixelIcon from './PixelIcon'
+import MenuBar from './MenuBar'
 
 /** "서재" 창의 내용: DB 파일 관리 툴바 + 책 목록/상세/감상문. */
 export default function LibraryWindow({
@@ -11,10 +12,8 @@ export default function LibraryWindow({
   isDirty,
   busy,
   error,
-  fileName,
   lastSaved,
   canAutoSave,
-  saveTarget,
   driveSupported,
   books,
   fsaSupported,
@@ -33,6 +32,8 @@ export default function LibraryWindow({
   onOpenReviewWindow,
   onViewReview,
   onSearchBy,
+  onOpenWindow, // (name) => void — 보기/도움말 메뉴에서 다른 창을 엽니다
+  onCloseWindow,
   focus,
 }) {
   const [selectedBookId, setSelectedBookId] = useState(focus?.bookId ?? null)
@@ -66,35 +67,62 @@ export default function LibraryWindow({
     setSelectedBookId(null)
   }
 
+  const menus = [
+    {
+      label: '파일(F)',
+      items: [
+        { label: '서재 파일 열기...', onClick: openLibrary, disabled: busy },
+        { label: '저장', onClick: () => saveLibrary(false), shortcut: 'Ctrl+S', disabled: busy || !isReady },
+        { label: '다른 이름으로 저장...', onClick: () => saveLibrary(true), shortcut: 'Ctrl+Shift+S', disabled: busy || !isReady },
+        { separator: true },
+        { label: '닫기', onClick: () => onCloseWindow() },
+      ],
+    },
+    {
+      label: '편집(E)',
+      items: [
+        { label: '책 추가...', onClick: () => setBookFormMode('new'), disabled: !isReady },
+        { label: '책 정보 수정...', onClick: () => setBookFormMode(selectedBook), disabled: !selectedBook },
+        { label: '휴지통으로 보내기', onClick: handleDeleteBook, disabled: !selectedBook },
+        { separator: true },
+        { label: '감상문 쓰기...', onClick: () => onOpenReviewWindow(selectedBook, null), disabled: !selectedBook },
+      ],
+    },
+    {
+      label: '보기(V)',
+      items: [
+        { label: '검색', onClick: () => onOpenWindow('search'), disabled: !isReady },
+        { label: '다음 책', onClick: () => onOpenWindow('next-books'), disabled: !isReady },
+        { label: '독서 통계', onClick: () => onOpenWindow('stats'), disabled: !isReady },
+        { label: '오늘의 인용구', onClick: () => onOpenWindow('quote') },
+        { separator: true },
+        { label: '휴지통', onClick: () => onOpenWindow('trash'), disabled: !isReady },
+      ],
+    },
+    {
+      label: '도움말(H)',
+      items: [{ label: '서재 속성', onClick: () => onOpenWindow('properties') }],
+    },
+  ]
+
   return (
     <div className="library-window">
-      <header className="app__header">
-        <DataManager
-          isReady={isReady}
-          isDirty={isDirty}
-          busy={busy}
-          fileName={fileName}
-          lastSaved={lastSaved}
-          canAutoSave={canAutoSave}
-          saveTarget={saveTarget}
-          driveSupported={driveSupported}
-          fsaSupported={fsaSupported}
-          onOpen={openLibrary}
-          onSave={saveLibrary}
-        />
-        {error && (
-          <p className="app__error">
-            <PixelIcon name="warning" className="pixel-icon--inline" />
-            {error}
-          </p>
-        )}
-      </header>
+      <MenuBar menus={menus} />
+      {error && (
+        <p className="app__error">
+          <PixelIcon name="warning" className="pixel-icon--inline" />
+          {error}
+        </p>
+      )}
 
       <div className="construction-bar" role="presentation" />
 
       {!isReady && (
         <div className="app__empty-state">
           <p>서재 DB 파일(.db)을 열거나, 새 서재를 만들어 시작하세요.</p>
+          <button type="button" onClick={openLibrary} disabled={busy}>
+            서재 파일 열기
+          </button>
           <p className="app__empty-state-sub">Best viewed with any modern browser · No plugins required</p>
         </div>
       )}
@@ -156,6 +184,15 @@ export default function LibraryWindow({
           </section>
         </main>
       )}
+
+      <SaveStatusBar
+        isReady={isReady}
+        isDirty={isDirty}
+        lastSaved={lastSaved}
+        canAutoSave={canAutoSave}
+        driveSupported={driveSupported}
+        fsaSupported={fsaSupported}
+      />
     </div>
   )
 }

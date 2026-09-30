@@ -295,12 +295,6 @@
 }
 
 /* ====== 서재 창 내부 ====== */
-.app__header {
-  border: 2px inset var(--win-face);
-  padding: 8px;
-  background: var(--win-face-light);
-}
-
 .app__error {
   color: #ffffff;
   background: var(--win-danger);
@@ -346,41 +340,31 @@
   min-height: 300px;
 }
 
-/* ====== DataManager ====== */
-.data-manager {
+/* ====== 서재 창 아래 상태 표시줄 ====== */
+.save-status {
+  margin-top: 8px;
+}
+
+.save-status__bar {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 10px;
-}
-
-.data-manager__actions {
-  display: flex;
-  gap: 6px;
-  flex-wrap: wrap;
-}
-
-.data-manager__status {
+  gap: 12px;
+  min-height: 22px;
+  padding: 2px 8px;
   font-size: 12px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  border: 1px inset var(--win-face);
-  background: var(--win-light);
-  padding: 3px 8px;
+  border: 1px solid;
+  border-color: #808080 #ffffff #ffffff #808080; /* 음푹 들어간 98 상태 표시줄 */
+  background: var(--win-face);
 }
 
-.data-manager__filename {
-  font-weight: bold;
-}
-
-.data-manager__saved,
-.data-manager__autosave {
+.save-status__saved,
+.save-status__hint {
   color: var(--win-text-muted);
   font-size: 11px;
 }
 
-.data-manager__dirty {
+.save-status__dirty {
   color: var(--win-danger);
   font-weight: bold;
   animation: blink 1s steps(2, start) infinite;
@@ -392,11 +376,10 @@
   }
 }
 
-.data-manager__notice {
-  width: 100%;
+.save-status__notice {
   font-size: 11px;
   color: var(--win-text-muted);
-  margin: 4px 0 0;
+  margin: 0 0 4px;
   border: 1px dashed var(--win-shadow);
   padding: 4px 6px;
   background: #ffffe0;
@@ -1972,27 +1955,6 @@
   padding: 0;
 }
 
-.search-window__results li button {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 2px;
-  width: 100%;
-  padding: 4px 6px;
-  text-align: left;
-  background: transparent;
-  border: 1px solid transparent;
-  color: inherit;
-  font: inherit;
-  cursor: pointer;
-}
-
-.search-window__results li button:hover,
-.search-window__results li button:focus-visible {
-  background: var(--win-selection);
-  color: var(--win-selection-text);
-}
-
 .search-window__title {
   font-weight: bold;
 }
@@ -2128,41 +2090,11 @@
   color: var(--win-selection);
 }
 
-.search-window__active {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin: 0;
-  font-size: 12px;
-}
-
-.search-window__active span {
-  padding: 1px 8px;
-  background: var(--win-selection);
-  color: var(--win-selection-text);
-}
-
 /* 검색 결과 보기 방식 */
-.search-window__views {
-  display: flex;
-  gap: 2px;
-}
-
-.search-window__views button.is-active {
-  border-style: inset;
-  font-weight: bold;
-}
-
-.search-window__items.is-grid {
+.search-window__items.is-large {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
   gap: 6px;
-}
-
-.search-window__items.is-grid li button {
-  height: 100%;
-  align-items: stretch;
-  border: 1px solid var(--win-shadow);
 }
 
 .search-window__cover {
@@ -2172,7 +2104,7 @@
   background: var(--win-face);
 }
 
-.search-window__items.is-grid .search-window__snippet {
+.search-window__items.is-large .search-window__snippet {
   display: -webkit-box;
   -webkit-line-clamp: 6;
   -webkit-box-orient: vertical;
@@ -2277,4 +2209,301 @@
 .props__buttons {
   display: flex;
   justify-content: flex-end;
+}
+
+/* ====== 비활성 창: 제목 줄이 회색 (Windows 98) ====== */
+.win--inactive .win__titlebar {
+  background: linear-gradient(90deg, #808080, #b5b5b5);
+  color: #c0c0c0;
+}
+
+.win--inactive .win__control--close {
+  color: var(--win-shadow);
+}
+
+/* ====== 메뉴바 (파일 편집 보기 도움말) ====== */
+.menubar {
+  position: relative;
+  z-index: 5;
+  display: flex;
+  margin: -10px -10px 6px; /* 창 본문의 안쪽 여백을 지우고 제목 줄 바로 아래에 붙입니다 */
+  padding: 1px 2px;
+  background: var(--win-face);
+  border-bottom: 1px solid var(--win-shadow);
+  box-shadow: 0 1px 0 var(--win-light);
+}
+
+.menubar__menu {
+  position: relative;
+}
+
+.menubar .menubar__top {
+  padding: 2px 8px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--win-text);
+  cursor: default;
+}
+
+.menubar .menubar__top:hover:not(:disabled),
+.menubar .menubar__top:focus-visible {
+  border-color: #ffffff #808080 #808080 #ffffff;
+  filter: none;
+}
+
+.menubar .menubar__top.is-open {
+  padding: 3px 7px 1px 9px;
+  border-color: #808080 #ffffff #ffffff #808080;
+}
+
+.context-menu.menubar__dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+}
+
+.menubar__item {
+  display: flex;
+  justify-content: space-between;
+  gap: 28px;
+  white-space: nowrap;
+}
+
+.menubar__shortcut {
+  color: inherit;
+  opacity: 0.85;
+}
+
+.menubar__item:disabled {
+  color: var(--win-shadow);
+  text-shadow: 1px 1px 0 var(--win-light); /* 비활성 항목의 엠보스 글자 */
+  cursor: default;
+}
+
+.menubar__item:disabled:hover {
+  background: transparent;
+  color: var(--win-shadow);
+}
+
+/* ====== 속성 시트 탭 (Windows 98): 활성 탭이 앞으로 나와 패널과 이어집니다 ====== */
+.stats__tabs,
+.search-window__tabs {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: flex-end;
+  gap: 0;
+  padding: 0 4px;
+  margin-bottom: -2px; /* 패널 위쪽 테두리와 2px 겹침 */
+}
+
+.stats__tab,
+.search-window__tabs button {
+  position: relative;
+  top: 0;
+  margin: 2px 0; /* 비활성 탭은 패널 테두리 위에서 끝납니다 */
+  padding: 3px 12px;
+  border: 1px solid;
+  border-bottom: none;
+  border-color: #ffffff #000000 transparent #ffffff;
+  background: var(--win-face);
+  box-shadow: inset -1px 0 0 #808080, inset 1px 1px 0 #dfdfdf;
+  font-weight: normal;
+}
+
+.stats__tab.is-active,
+.search-window__tabs button.is-active {
+  z-index: 3;
+  margin: 0; /* 활성 탭은 패널 테두리를 덮습니다 */
+  padding: 5px 14px 5px;
+  border-style: solid;
+  border-bottom: none;
+  font-weight: bold;
+}
+
+.stats__panel,
+.search-window__sheet {
+  position: relative;
+  z-index: 1;
+  border: 1px solid;
+  border-color: #ffffff #000000 #000000 #ffffff;
+  box-shadow: inset -1px -1px 0 #808080, inset 1px 1px 0 #dfdfdf;
+}
+
+.search-window__sheet {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+  padding: 8px;
+}
+
+/* ====== 검색 창: Windows 98 "파일 찾기" ====== */
+.search-window {
+  padding: 0;
+  gap: 0;
+}
+
+.search-window--empty {
+  padding: 8px;
+}
+
+.search-window__content {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 0;
+  padding: 8px;
+}
+
+.search-window__group {
+  min-width: 0;
+  margin: 0;
+  padding: 4px 8px 8px;
+  border: 2px groove var(--win-face);
+}
+
+.search-window__group legend {
+  padding: 0 4px;
+  font-size: 12px;
+}
+
+.search-window__group .search-window__bar {
+  margin-bottom: 8px;
+}
+
+/* 결과 항목 공통: 한 번 누르면 선택(파란 강조), 더블클릭/Enter로 열기 */
+.search-window__items {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.search-window__items li {
+  padding: 3px 6px;
+  border: 1px dotted transparent;
+  cursor: default;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.search-window__items.is-list li {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.search-window__items.is-large {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: 6px;
+}
+
+.search-window__items.is-large li {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.search-window__items.is-small {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  gap: 0 6px;
+}
+
+.search-window__items.is-small li {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.search-window__results [aria-selected='true'] {
+  background: var(--win-selection);
+  color: var(--win-selection-text);
+  border-color: #ffffff;
+}
+
+.search-window__results [aria-selected='true'] .search-window__meta,
+.search-window__results [aria-selected='true'] .book-detail__rating {
+  color: inherit;
+}
+
+.search-window__results:focus-visible {
+  outline: 1px dotted var(--win-text);
+  outline-offset: -3px;
+}
+
+/* "자세히" 보기: 탐색기의 열 머리글이 있는 표 */
+.search-table {
+  border-collapse: collapse;
+  table-layout: fixed;
+  font-size: 12px;
+}
+
+.search-table th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  padding: 0;
+  text-align: left;
+  background: var(--win-face);
+  border: 1px solid;
+  border-color: #ffffff #808080 #808080 #ffffff;
+  box-shadow: inset -1px -1px 0 #000000;
+}
+
+.search-table th button {
+  display: block;
+  width: 100%;
+  padding: 3px 8px;
+  border: none;
+  background: transparent;
+  color: var(--win-text);
+  font: inherit;
+  text-align: left;
+  cursor: default;
+}
+
+.search-table th button:active:not(:disabled) {
+  padding: 4px 7px 2px 9px;
+}
+
+.search-table__grip {
+  position: absolute;
+  top: 0;
+  right: -3px;
+  bottom: 0;
+  z-index: 2;
+  width: 7px;
+  cursor: col-resize;
+  touch-action: none;
+}
+
+.search-table td {
+  padding: 2px 8px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  cursor: default;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.search-table tbody tr[aria-selected='true'] td {
+  background: var(--win-selection);
+  color: var(--win-selection-text);
+}
+
+.search-window__statusbar {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 4px 16px;
+  min-height: 22px;
+  padding: 2px 8px;
+  font-size: 12px;
+  border: 1px solid;
+  border-color: #808080 #ffffff #ffffff #808080;
+  background: var(--win-face);
 }

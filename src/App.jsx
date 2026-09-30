@@ -253,6 +253,17 @@ export default function App() {
     })
   }
 
+  // 서재 창 메뉴바의 보기/도움말 메뉴가 다른 창을 이름으로 엽니다.
+  const openWindowByName = (name) =>
+    ({
+      search: () => openSearchWindow(),
+      'next-books': openNextBooksWindow,
+      stats: openStatsWindow,
+      quote: openQuoteOfDayWindow,
+      trash: openTrashWindow,
+      properties: openPropertiesWindow,
+    })[name]?.()
+
   const handleSaveIcon = () => {
     if (!isReady) {
       window.alert('먼저 "서재" 아이콘으로 서재를 열거나 새로 만들어주세요.')
@@ -370,7 +381,9 @@ export default function App() {
     }
 
     if (w.id === 'library') {
-      return <LibraryWindow {...libraryDb} focus={w.focus} onOpenReviewWindow={openReviewEditWindow}
+      return <LibraryWindow {...libraryDb} focus={w.focus}
+          onOpenWindow={openWindowByName}
+          onCloseWindow={() => closeWindow(w.id)} onOpenReviewWindow={openReviewEditWindow}
           onViewReview={openReviewViewWindow}
           onSearchBy={searchBy}
         />
@@ -421,6 +434,7 @@ export default function App() {
           onOpenBook={openLibraryAtBook}
           onOpenReview={openReviewViewWindow}
           filter={w.filter}
+          onClose={() => closeWindow(w.id)}
         />
       )
     }
@@ -518,6 +532,11 @@ export default function App() {
     return null
   }
 
+  // 최소화되지 않은 창 중 가장 앞에 있는 창이 "활성" 창입니다.
+  const activeId = windows
+    .filter((w) => !w.minimized)
+    .reduce((top, w) => (top === null || w.zIndex > top.zIndex ? w : top), null)?.id
+
   return (
     <>
     {/* 부팅/종료 화면이 덮여 있는 동안 뒤의 바탕화면은 키보드/스크린리더로도 조작되지 않게 합니다. */}
@@ -573,6 +592,7 @@ export default function App() {
           initialPosition={w.initialPosition}
           initialSize={w.initialSize}
           minimized={w.minimized}
+          active={w.id === activeId}
           maximized={isMobile}
           dialog={w.dialog}
           onClose={() => closeWindow(w.id)}
@@ -583,7 +603,7 @@ export default function App() {
         </Window>
       ))}
 
-      <Taskbar windows={windows} onToggle={handleToggleFromTaskbar} menuItems={isMobile ? mobileMenuItems : startMenuItems}
+      <Taskbar windows={windows} activeId={activeId} onToggle={handleToggleFromTaskbar} menuItems={isMobile ? mobileMenuItems : startMenuItems}
         onClockEasterEgg={openCreditsWindow}
       />
     </div>

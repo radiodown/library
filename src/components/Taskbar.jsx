@@ -17,7 +17,7 @@ function StartLogo() {
  * 하단 작업 표시줄. 시작 메뉴, 열려 있는 창 목록, 시계를 보여줍니다.
  * menuItems: { icon, label, onClick } 또는 { separator: true } 배열
  */
-export default function Taskbar({ windows, onToggle, menuItems = [], onClockEasterEgg }) {
+export default function Taskbar({ windows, activeId, onToggle, menuItems = [], onClockEasterEgg }) {
   const [now, setNow] = useState(new Date())
   const [menuOpen, setMenuOpen] = useState(false)
   const startRef = useRef(null)
@@ -101,7 +101,7 @@ export default function Taskbar({ windows, onToggle, menuItems = [], onClockEast
           <button
             key={w.id}
             type="button"
-            className={`taskbar__item${!w.minimized ? ' is-active' : ''}`}
+            className={`taskbar__item${w.id === activeId ? ' is-active' : ''}`}
             onClick={() => onToggle(w.id)}
           >
             <PixelIcon name={w.icon} /> <span className="taskbar__title">{w.title}</span>
