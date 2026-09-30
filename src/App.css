@@ -25,7 +25,7 @@
   background: transparent;
   border: 1px dotted transparent;
   color: #ffffff;
-  text-shadow: 1px 1px 1px #000000;
+  text-shadow: 1px 1px 0 #000000; /* 번짐 없이 딱 떨어지는 도트 그림자 */
   padding: 6px 4px;
   user-select: none;
   -webkit-user-select: none;
@@ -701,7 +701,7 @@
 .stats__badge {
   min-width: 16px;
   padding: 0 4px;
-  border-radius: 8px;
+  border-radius: 0;
   background: var(--win-danger);
   color: #fff;
   font-size: 10px;
