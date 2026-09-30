@@ -1,12 +1,35 @@
+import { Fragment } from 'react'
 import { toPreviewText } from '../utils/reviewPreview'
 import ReadingHistory from './ReadingHistory'
 import QuoteList from './QuoteList'
 import { todayString } from '../utils/stats'
+import { splitNames } from '../utils/people'
 
 const STATUS_LABEL = {
   wishlist: '읽고 싶음',
   reading: '읽는 중',
   finished: '완독',
+}
+
+/** 저자/역자/출판사 이름들. onSearchBy가 있으면 이름을 눌러 그 사람(출판사)의 책을 모아 볼 수 있습니다. */
+function PersonLinks({ kind, names, onSearchBy }) {
+  return names.map((name, i) => (
+    <Fragment key={name}>
+      {i > 0 && ', '}
+      {onSearchBy ? (
+        <button
+          type="button"
+          className="person-link"
+          title={`"${name}"의 책 모아보기`}
+          onClick={() => onSearchBy(kind, name)}
+        >
+          {name}
+        </button>
+      ) : (
+        name
+      )}
+    </Fragment>
+  ))
 }
 
 /** 선택된 책의 정보와 감상문 목록. 감상문 작성/수정은 별도의 뜨는 창에서 이루어집니다. */
@@ -27,6 +50,7 @@ export default function BookDetail({
   onViewReview,
   onEditBook,
   onDeleteBook,
+  onSearchBy, // (kind: 'author'|'translator'|'publisher', name) => void
 }) {
   const today = todayString()
   // 다시 읽는 중인 회차: 시작은 했지만 아직 완독일이 없는 재독 기록
@@ -73,10 +97,22 @@ export default function BookDetail({
         </div>
         <div className="book-detail__info">
           <h2>{book.title}</h2>
-          {book.author && <p className="book-detail__author">{book.author}</p>}
+          {book.author && (
+            <p className="book-detail__author">
+              <PersonLinks kind="author" names={splitNames(book.author)} onSearchBy={onSearchBy} />
+            </p>
+          )}
           {(book.translator || book.publisher) && (
             <p className="book-detail__meta">
-              {[book.translator && `${book.translator} 옮김`, book.publisher].filter(Boolean).join(' · ')}
+              {book.translator && (
+                <>
+                  <PersonLinks kind="translator" names={splitNames(book.translator)} onSearchBy={onSearchBy} /> 옮김
+                </>
+              )}
+              {book.translator && book.publisher && ' · '}
+              {book.publisher && (
+                <PersonLinks kind="publisher" names={[book.publisher.trim()]} onSearchBy={onSearchBy} />
+              )}
             </p>
           )}
           <p>

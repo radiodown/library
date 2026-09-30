@@ -32,6 +32,7 @@ export default function LibraryWindow({
   removeQuote,
   onOpenReviewWindow,
   onViewReview,
+  onSearchBy,
   focus,
 }) {
   const [selectedBookId, setSelectedBookId] = useState(focus?.bookId ?? null)
@@ -145,6 +146,7 @@ export default function LibraryWindow({
                 onViewReview={(review) => onViewReview(selectedBook, review)}
                 onEditBook={() => setBookFormMode(selectedBook)}
                 onDeleteBook={handleDeleteBook}
+                onSearchBy={onSearchBy}
               />
             )}
 

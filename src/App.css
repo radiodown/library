@@ -2111,3 +2111,70 @@
   font-size: 11px;
   color: var(--win-text-muted);
 }
+
+/* 저자·역자·출판사 이름: 누르면 그 이름의 책을 모아 보는 링크 */
+.person-link {
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--win-title-start);
+  font: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.person-link:hover,
+.person-link:focus-visible {
+  color: var(--win-selection);
+}
+
+.search-window__active {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0;
+  font-size: 12px;
+}
+
+.search-window__active span {
+  padding: 1px 8px;
+  background: var(--win-selection);
+  color: var(--win-selection-text);
+}
+
+/* 검색 결과 보기 방식 */
+.search-window__views {
+  display: flex;
+  gap: 2px;
+}
+
+.search-window__views button.is-active {
+  border-style: inset;
+  font-weight: bold;
+}
+
+.search-window__items.is-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: 6px;
+}
+
+.search-window__items.is-grid li button {
+  height: 100%;
+  align-items: stretch;
+  border: 1px solid var(--win-shadow);
+}
+
+.search-window__cover {
+  width: 100%;
+  aspect-ratio: 2 / 3;
+  object-fit: cover;
+  background: var(--win-face);
+}
+
+.search-window__items.is-grid .search-window__snippet {
+  display: -webkit-box;
+  -webkit-line-clamp: 6;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}

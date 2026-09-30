@@ -25,6 +25,36 @@ function Bars({ items, caption }) {
   )
 }
 
+/** 저자/출판사 순위 칩. 누르면(onSearchBy가 있을 때) 검색 창에서 그 이름의 책을 모아 봅니다. */
+function RankedNames({ kind, rows, onSearchBy }) {
+  if (rows.length === 0) {
+    return (
+      <p className="stats__hint">
+        {kind === 'author' ? '저자가 입력된 완독 책이 아직 없습니다.' : '출판사가 입력된 완독 책이 아직 없습니다. 책 정보 수정에서 도서 검색으로 채울 수 있습니다.'}
+      </p>
+    )
+  }
+  return (
+    <>
+      <ul className="stats__tags">
+        {rows.map((r) => (
+          <li key={r.name}>
+            {onSearchBy ? (
+              <button type="button" className="person-link" onClick={() => onSearchBy(kind, r.name)}>
+                {r.name}
+              </button>
+            ) : (
+              r.name
+            )}{' '}
+            <strong>{r.count}</strong>
+          </li>
+        ))}
+      </ul>
+      <p className="stats__hint">완독한 책 권수 기준이며 재독은 세지 않습니다.</p>
+    </>
+  )
+}
+
 function Tile({ label, value, sub }) {
   return (
     <div className="stats__tile">
@@ -73,6 +103,7 @@ export default function StatsWindow({
   reviewsVersion,
   onWriteReview,
   onOpenLibrary,
+  onSearchBy,
 }) {
   const [tab, setTab] = useState('overview')
   const [pickedYear, setPickedYear] = useState(null)
@@ -94,7 +125,7 @@ export default function StatsWindow({
     )
   }
 
-  const { totals, years, perMonth, perDay, ratingDist, topTags, attention } = stats
+  const { totals, years, perMonth, perDay, ratingDist, topTags, topAuthors, topPublishers, attention } = stats
 
   const attentionTotal =
     attention.noReview.length +
@@ -310,6 +341,16 @@ export default function StatsWindow({
                   ))}
                 </ul>
               )}
+            </section>
+
+            <section className="stats__section">
+              <h3>많이 읽은 저자</h3>
+              <RankedNames kind="author" rows={topAuthors} onSearchBy={onSearchBy} />
+            </section>
+
+            <section className="stats__section">
+              <h3>많이 읽은 출판사</h3>
+              <RankedNames kind="publisher" rows={topPublishers} onSearchBy={onSearchBy} />
             </section>
           </>
         )}

@@ -102,13 +102,17 @@ export default function App() {
       focus: { bookId, nonce: Date.now() },
     })
 
-  const openSearchWindow = () =>
+  // filter를 주면 검색 창이 그 저자/역자/출판사로 걸러진 상태로 열립니다. (이미 열려 있어도 갱신)
+  const openSearchWindow = (filter) =>
     openWindow('search', {
       title: '검색',
       icon: 'search',
       initialPosition: { x: 110, y: 70 },
       initialSize: { width: 760, height: 540 },
+      ...(filter?.kind ? { filter } : {}),
     })
+
+  const searchBy = (kind, name) => openSearchWindow({ kind, name, nonce: Date.now() })
 
   const openTrashWindow = () =>
     openWindow('trash', {
@@ -250,7 +254,7 @@ export default function App() {
 
   const startMenuItems = [
     { icon: 'library', label: '서재', onClick: openLibraryWindow },
-    { icon: 'search', label: '검색', onClick: openSearchWindow },
+    { icon: 'search', label: '검색', onClick: () => openSearchWindow() },
     { icon: 'bookmark', label: '다음 책', onClick: openNextBooksWindow },
     { icon: 'chart', label: '독서 통계', onClick: openStatsWindow },
     { icon: 'quote', label: '오늘의 인용구', onClick: openQuoteOfDayWindow },
@@ -272,7 +276,7 @@ export default function App() {
   // 모바일: 서재/랭킹/통계/인용구 창은 읽기 전용 화면으로 보여 줍니다.
   const mobileMenuItems = [
     { icon: 'library', label: '서재', onClick: openLibraryWindow },
-    { icon: 'search', label: '검색', onClick: openSearchWindow },
+    { icon: 'search', label: '검색', onClick: () => openSearchWindow() },
     { icon: 'bookmark', label: '다음 책', onClick: openNextBooksWindow },
     { icon: 'chart', label: '독서 통계', onClick: openStatsWindow },
     { icon: 'quote', label: '오늘의 인용구', onClick: openQuoteOfDayWindow },
@@ -317,6 +321,7 @@ export default function App() {
           listReviews={libraryDb.listReviews}
           focus={w.focus}
           onViewReview={openReviewViewWindow}
+          onSearchBy={searchBy}
         />
       )
     } else if (w.id === 'next-books') {
@@ -335,6 +340,7 @@ export default function App() {
           readings={libraryDb.readings}
           getReviewCounts={libraryDb.getReviewCounts}
           reviewsVersion={libraryDb.reviewsVersion}
+          onSearchBy={searchBy}
         />
       )
     }
@@ -350,6 +356,7 @@ export default function App() {
     if (w.id === 'library') {
       return <LibraryWindow {...libraryDb} focus={w.focus} onOpenReviewWindow={openReviewEditWindow}
           onViewReview={openReviewViewWindow}
+          onSearchBy={searchBy}
         />
     }
     if (w.id === 'review') {
@@ -397,6 +404,7 @@ export default function App() {
           onOpenLibrary={isMobile ? openLibrary : openLibraryWindow}
           onOpenBook={openLibraryAtBook}
           onOpenReview={openReviewViewWindow}
+          filter={w.filter}
         />
       )
     }
@@ -430,6 +438,7 @@ export default function App() {
           reviewsVersion={libraryDb.reviewsVersion}
           onWriteReview={(book) => openReviewEditWindow(book, null)}
           onOpenLibrary={openLibraryWindow}
+          onSearchBy={searchBy}
         />
       )
     }

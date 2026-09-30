@@ -7,7 +7,7 @@ import BookDetail from './BookDetail'
  * 감상문은 데스크탑처럼 "보기"를 누르면 별도의 전체 화면 창으로 열려서, 작업표시줄로 여러 개를 오갈 수 있습니다.
  * focus: { bookId, nonce } — 랭킹/인용구 창에서 "이 책 보기"를 누르면 다른 책으로 이동시키는 신호입니다.
  */
-export default function MobileLibrary({ books, readings, quotes, listReviews, focus, onViewReview }) {
+export default function MobileLibrary({ books, readings, quotes, listReviews, focus, onViewReview, onSearchBy }) {
   const [selectedId, setSelectedId] = useState(focus?.bookId ?? null)
   const [seenNonce, setSeenNonce] = useState(focus?.nonce)
   const rootRef = useRef(null)
@@ -46,6 +46,7 @@ export default function MobileLibrary({ books, readings, quotes, listReviews, fo
             readings={readings.filter((r) => r.bookId === book.id)}
             quotes={quotes.filter((q) => q.bookId === book.id)}
             onViewReview={(review) => onViewReview(book, review)}
+            onSearchBy={onSearchBy}
           />
         </div>
       )}

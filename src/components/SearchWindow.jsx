@@ -1,6 +1,7 @@
 import { Fragment, useMemo, useState } from 'react'
 import Fuse from 'fuse.js'
 import { toPreviewText } from '../utils/reviewPreview'
+import { splitNames } from '../utils/people'
 import PixelIcon from './PixelIcon'
 
 const STATUS_LABEL = {
@@ -15,6 +16,20 @@ const TYPE_TABS = [
   { key: 'review', label: '감상문' },
   { key: 'quote', label: '인용구' },
 ]
+
+const VIEW_KEY = 'library:search-view'
+const VIEWS = [
+  { key: 'list', label: '리스트' },
+  { key: 'grid', label: '그리드' },
+]
+
+function readView() {
+  try {
+    return localStorage.getItem(VIEW_KEY) === 'grid' ? 'grid' : 'list'
+  } catch {
+    return 'list'
+  }
+}
 
 const SNIPPET_RADIUS = 50
 const MAX_RESULTS_PER_TYPE = 50
@@ -60,14 +75,50 @@ export default function SearchWindow({
   onOpenLibrary,
   onOpenBook,
   onOpenReview,
+  filter, // { kind: 'author'|'translator'|'publisher', name, nonce } — 책 상세에서 이름을 눌러 열 때
 }) {
   const [query, setQuery] = useState('')
   const [type, setType] = useState('all')
   const [status, setStatus] = useState('all')
   const [minRating, setMinRating] = useState(0)
   const [tag, setTag] = useState('')
+  const [view, setViewState] = useState(readView) // 'list' | 'grid' — 다음에 열 때도 기억합니다
+  const [author, setAuthor] = useState(filter?.kind === 'author' ? filter.name : '')
+  const [translator, setTranslator] = useState(filter?.kind === 'translator' ? filter.name : '')
+  const [publisher, setPublisher] = useState(filter?.kind === 'publisher' ? filter.name : '')
+  const [seenNonce, setSeenNonce] = useState(filter?.nonce)
+
+  // 열려 있는 창에 새 필터 요청이 오면 다른 조건은 모두 풀고 그 이름으로만 거릅니다. (렌더 중 상태 갱신 패턴)
+  if (filter?.nonce !== seenNonce) {
+    setSeenNonce(filter?.nonce)
+    setQuery('')
+    setType('all')
+    setStatus('all')
+    setMinRating(0)
+    setTag('')
+    setAuthor(filter?.kind === 'author' ? filter.name : '')
+    setTranslator(filter?.kind === 'translator' ? filter.name : '')
+    setPublisher(filter?.kind === 'publisher' ? filter.name : '')
+  }
+
+  const setView = (next) => {
+    setViewState(next)
+    try {
+      localStorage.setItem(VIEW_KEY, next)
+    } catch {
+      // 저장할 수 없어도 이번 세션에서는 바뀐 대로 보입니다.
+    }
+  }
 
   const bookMap = useMemo(() => new Map(books.map((b) => [b.id, b])), [books])
+  const nameOptions = useMemo(() => {
+    const sorted = (set) => [...set].sort((a, b) => a.localeCompare(b, 'ko'))
+    return {
+      authors: sorted(new Set(books.flatMap((b) => splitNames(b.author)))),
+      translators: sorted(new Set(books.flatMap((b) => splitNames(b.translator)))),
+      publishers: sorted(new Set(books.map((b) => b.publisher?.trim()).filter(Boolean))),
+    }
+  }, [books])
   const allTags = useMemo(
     () => [...new Set(books.flatMap((b) => b.tags))].sort((a, b) => a.localeCompare(b, 'ko')),
     [books],
@@ -98,14 +149,18 @@ export default function SearchWindow({
     () => query.toLowerCase().split(/\s+/).filter(Boolean),
     [query],
   )
-  const hasFilter = status !== 'all' || minRating > 0 || tag !== ''
+  const hasFilter =
+    status !== 'all' || minRating > 0 || tag !== '' || author !== '' || translator !== '' || publisher !== ''
 
   const results = useMemo(() => {
     const passesFilter = (book) =>
       !!book &&
       (status === 'all' || book.status === status) &&
       (minRating === 0 || (book.rating ?? 0) >= minRating) &&
-      (tag === '' || book.tags.includes(tag))
+      (tag === '' || book.tags.includes(tag)) &&
+      (author === '' || splitNames(book.author).includes(author)) &&
+      (translator === '' || splitNames(book.translator).includes(translator)) &&
+      (publisher === '' || book.publisher?.trim() === publisher)
 
     // 검색어도 필터도 없으면 아무것도 보여 주지 않습니다.
     if (terms.length === 0 && !hasFilter) return null
@@ -129,7 +184,7 @@ export default function SearchWindow({
         .map((q) => ({ ...q, snippet: makeSnippet(q.content.replace(/\s+/g, ' '), terms) }))
     }
     return out
-  }, [terms, hasFilter, type, status, minRating, tag, query, fuse, books, reviewDocs, quotes, bookMap])
+  }, [terms, hasFilter, type, status, minRating, tag, author, translator, publisher, query, fuse, books, reviewDocs, quotes, bookMap])
 
   if (!isReady) {
     return (
@@ -174,6 +229,19 @@ export default function SearchWindow({
             </button>
           ))}
         </div>
+        <div className="search-window__views" role="group" aria-label="보기 방식">
+          {VIEWS.map((v) => (
+            <button
+              key={v.key}
+              type="button"
+              aria-pressed={view === v.key}
+              className={view === v.key ? 'is-active' : ''}
+              onClick={() => setView(v.key)}
+            >
+              {v.label}
+            </button>
+          ))}
+        </div>
         <label>
           상태
           <select value={status} onChange={(e) => setStatus(e.target.value)}>
@@ -197,6 +265,43 @@ export default function SearchWindow({
           </select>
         </label>
         <label>
+          저자
+          <select value={author} onChange={(e) => setAuthor(e.target.value)}>
+            <option value="">전체</option>
+            {nameOptions.authors.map((n) => (
+              <option key={n} value={n}>
+                {n}
+              </option>
+            ))}
+          </select>
+        </label>
+        {nameOptions.translators.length > 0 && (
+          <label>
+            역자
+            <select value={translator} onChange={(e) => setTranslator(e.target.value)}>
+              <option value="">전체</option>
+              {nameOptions.translators.map((n) => (
+                <option key={n} value={n}>
+                  {n}
+                </option>
+              ))}
+            </select>
+          </label>
+        )}
+        {nameOptions.publishers.length > 0 && (
+          <label>
+            출판사
+            <select value={publisher} onChange={(e) => setPublisher(e.target.value)}>
+              <option value="">전체</option>
+              {nameOptions.publishers.map((n) => (
+                <option key={n} value={n}>
+                  {n}
+                </option>
+              ))}
+            </select>
+          </label>
+        )}
+        <label>
           태그
           <select value={tag} onChange={(e) => setTag(e.target.value)}>
             <option value="">전체</option>
@@ -208,6 +313,14 @@ export default function SearchWindow({
           </select>
         </label>
       </div>
+
+      {(author || translator || publisher) && (
+        <p className="search-window__active">
+          {author && <span>저자: {author}</span>}
+          {translator && <span>역자: {translator}</span>}
+          {publisher && <span>출판사: {publisher}</span>}
+        </p>
+      )}
 
       <div className="search-window__results">
         {!results && (
@@ -221,10 +334,16 @@ export default function SearchWindow({
         {results && results.books.length > 0 && (
           <section>
             <h3>책 ({results.books.length})</h3>
-            <ul>
+            <ul className={`search-window__items is-${view}`}>
               {cap(results.books).map((b) => (
                 <li key={b.id}>
                   <button type="button" onClick={() => onOpenBook(b.id)}>
+                    {view === 'grid' &&
+                      (b.coverUrl ? (
+                        <img className="search-window__cover" src={b.coverUrl} alt="" loading="lazy" />
+                      ) : (
+                        <span className="search-window__cover search-window__cover--none" />
+                      ))}
                     <span className="search-window__title">
                       <Highlight text={b.title} terms={terms} />
                     </span>
@@ -245,7 +364,7 @@ export default function SearchWindow({
         {results && results.reviews.length > 0 && (
           <section>
             <h3>감상문 ({results.reviews.length})</h3>
-            <ul>
+            <ul className={`search-window__items is-${view}`}>
               {cap(results.reviews).map((r) => {
                 const book = bookMap.get(r.bookId)
                 return (
@@ -266,7 +385,7 @@ export default function SearchWindow({
         {results && results.quotes.length > 0 && (
           <section>
             <h3>인용구 ({results.quotes.length})</h3>
-            <ul>
+            <ul className={`search-window__items is-${view}`}>
               {cap(results.quotes).map((q) => {
                 const book = bookMap.get(q.bookId)
                 return (

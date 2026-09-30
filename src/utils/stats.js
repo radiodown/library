@@ -1,3 +1,5 @@
+import { splitNames } from './people'
+
 /** 이 일수 이상 "읽는 중"이면 오래 붙잡고 있는 책으로 봅니다. */
 export const STALE_READING_DAYS = 30
 
@@ -70,6 +72,18 @@ export function computeStats(books, reviewCounts, today, readings = []) {
     .sort((a, b) => b.count - a.count || a.tag.localeCompare(b.tag, 'ko'))
     .slice(0, 8)
 
+  // 완독한 책 권수 기준 저자/출판사 순위. 재독은 세지 않고, 공동 저자는 각자 한 권으로 셉니다.
+  const topBy = (namesOf) => {
+    const counts = {}
+    finished.forEach((b) => namesOf(b).forEach((n) => (counts[n] = (counts[n] || 0) + 1)))
+    return Object.entries(counts)
+      .map(([name, count]) => ({ name, count }))
+      .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name, 'ko'))
+      .slice(0, 8)
+  }
+  const topAuthors = topBy((b) => splitNames(b.author))
+  const topPublishers = topBy((b) => (b.publisher?.trim() ? [b.publisher.trim()] : []))
+
   const durations = [...finished, ...readings]
     .filter((r) => r.startDate && r.finishDate)
     .map((r) => daysBetween(r.startDate, r.finishDate))
@@ -105,6 +119,8 @@ export function computeStats(books, reviewCounts, today, readings = []) {
     perDay,
     ratingDist,
     topTags,
+    topAuthors,
+    topPublishers,
     // 관리가 필요한 책들
     attention: {
       noReview: finished.filter((b) => !hasReview(b)),
