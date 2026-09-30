@@ -31,8 +31,44 @@ function loadGsi() {
   return gsiPromise
 }
 
-let token = null // { value, expiresAt }
-let hasConsented = false
+// 토큰과 "이미 동의함" 표시를 localStorage에 보관해, 새로고침해도 (토큰이 살아 있는 동안은) 다시 로그인하지 않게 합니다.
+// drive.appdata 권한의 토큰이라 유출돼도 이 앱 전용 폴더만 접근되고, 약 1시간이면 만료됩니다.
+const TOKEN_KEY = 'library:drive-token'
+const CONSENT_KEY = 'library:drive-consented'
+
+function readStorage(key) {
+  try {
+    return localStorage.getItem(key)
+  } catch {
+    return null
+  }
+}
+
+function writeStorage(key, value) {
+  try {
+    if (value === null) localStorage.removeItem(key)
+    else localStorage.setItem(key, value)
+  } catch {
+    // 저장할 수 없어도 이번 세션에서는 메모리 값으로 동작합니다.
+  }
+}
+
+function loadStoredToken() {
+  try {
+    const saved = JSON.parse(readStorage(TOKEN_KEY))
+    return saved?.value && saved.expiresAt > Date.now() ? saved : null
+  } catch {
+    return null
+  }
+}
+
+let token = loadStoredToken() // { value, expiresAt }
+let hasConsented = readStorage(CONSENT_KEY) === '1' || !!token
+
+function setToken(next) {
+  token = next
+  writeStorage(TOKEN_KEY, next ? JSON.stringify(next) : null)
+}
 
 /**
  * 액세스 토큰을 반환합니다. 유효한 토큰이 있으면 재사용하고, 없으면 발급받습니다.
@@ -52,8 +88,9 @@ async function getToken(interactive) {
           reject(new Error(`Google 로그인 실패: ${res.error_description || res.error}`))
           return
         }
-        token = { value: res.access_token, expiresAt: Date.now() + Number(res.expires_in) * 1000 }
+        setToken({ value: res.access_token, expiresAt: Date.now() + Number(res.expires_in) * 1000 })
         hasConsented = true
+        writeStorage(CONSENT_KEY, '1')
         resolve(token.value)
       },
       error_callback: (err) => {
@@ -76,7 +113,7 @@ async function driveFetch(url, options, interactive) {
     ...options,
     headers: { ...options?.headers, Authorization: `Bearer ${await getToken(interactive)}` },
   })
-  if (res.status === 401) token = null
+  if (res.status === 401) setToken(null)
   if (!res.ok) {
     const detail = await res.text().catch(() => '')
     throw new Error(`Google Drive 오류 (${res.status}) ${detail.slice(0, 200)}`)
