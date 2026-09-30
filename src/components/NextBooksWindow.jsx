@@ -1,4 +1,5 @@
 import { useMemo, useRef, useState } from 'react'
+import MenuBar from './MenuBar'
 
 const STATUS_LABEL = { wishlist: '읽고 싶음', reading: '읽는 중', finished: '완독' }
 
@@ -15,7 +16,7 @@ function moveItem(list, from, to) {
  * 읽기 시작해도 목록에 남아 있고(완독하면 자동으로 빠집니다), 오른쪽에서 꽂을 수 있는 책은
  * "읽고 싶음"과 "읽는 중"인 책입니다. "무작위로 뽑기"는 읽고 싶음 책 중 하나를 골라 줍니다.
  */
-export default function NextBooksWindow({ isReady, books, nextBookIds, saveNextBooks, onOpenLibrary, onOpenBook }) {
+export default function NextBooksWindow({ isReady, books, nextBookIds, saveNextBooks, onOpenLibrary, onOpenBook, onClose }) {
   const dragRef = useRef(null) // { from: 'list', index } | { from: 'pool', bookId }
   const [overIndex, setOverIndex] = useState(null)
   const [pick, setPick] = useState(null) // 무작위로 뽑힌 책 id
@@ -83,8 +84,17 @@ export default function NextBooksWindow({ isReady, books, nextBookIds, saveNextB
     setOverIndex(null)
   }
 
+  const menus = [
+    { label: '파일(F)', items: [{ label: '닫기', onClick: () => onClose() }] },
+    {
+      label: '편집(E)',
+      items: [{ label: '무작위로 뽑기', onClick: drawRandom, disabled: wishlist.length === 0 }],
+    },
+  ]
+
   return (
     <div className="next-books">
+      {onClose && <MenuBar menus={menus} />}
       <div className="next-books__pick">
         <button type="button" onClick={drawRandom} disabled={wishlist.length === 0}>
           🎲 무작위로 뽑기

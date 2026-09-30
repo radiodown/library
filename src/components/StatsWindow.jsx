@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import ReadingHeatmap from './ReadingHeatmap'
+import MenuBar from './MenuBar'
 import { computeStats, todayString, STALE_READING_DAYS } from '../utils/stats'
 
 const TABS = [
@@ -104,6 +105,7 @@ export default function StatsWindow({
   onWriteReview,
   onOpenLibrary,
   onSearchBy,
+  onClose, // 데스크톱 창에서만 넘어오며, 있을 때만 메뉴바를 보여 줍니다
 }) {
   const [tab, setTab] = useState('overview')
   const [pickedYear, setPickedYear] = useState(null)
@@ -156,8 +158,20 @@ export default function StatsWindow({
     document.getElementById(`stats-tab-${TABS[next].id}`)?.focus()
   }
 
+  const menus = [
+    { label: '파일(F)', items: [{ label: '닫기', onClick: () => onClose() }] },
+    {
+      label: '보기(V)',
+      items: TABS.map((t) => ({
+        label: `${tab === t.id ? '✓' : '\u00a0\u00a0'} ${t.label}`,
+        onClick: () => setTab(t.id),
+      })),
+    },
+  ]
+
   return (
     <div className="stats">
+      {onClose && <MenuBar menus={menus} />}
       <div className="stats__tabs" role="tablist" onKeyDown={handleTabKeyDown}>
         {TABS.map((t) => (
           <button

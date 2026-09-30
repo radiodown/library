@@ -422,6 +422,7 @@ export default function App() {
           purgeBook={libraryDb.purgeBook}
           emptyTrash={libraryDb.emptyTrash}
           onOpenLibrary={openLibraryWindow}
+          onClose={() => closeWindow(w.id)}
         />
       )
     }
@@ -491,6 +492,7 @@ export default function App() {
           onWriteReview={(book) => openReviewEditWindow(book, null)}
           onOpenLibrary={openLibraryWindow}
           onSearchBy={searchBy}
+          onClose={() => closeWindow(w.id)}
         />
       )
     }
@@ -503,6 +505,7 @@ export default function App() {
           saveNextBooks={libraryDb.saveNextBooks}
           onOpenLibrary={openLibraryWindow}
           onOpenBook={openLibraryAtBook}
+          onClose={() => closeWindow(w.id)}
         />
       )
     }

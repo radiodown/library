@@ -27,6 +27,8 @@ export default function Window({
   const maximized = maximizedProp && !dialog
   const [pos, setPos] = useState(initialPosition)
   const [size, setSize] = useState(initialSize)
+  const [zoomed, setZoomed] = useState(false) // 최대화 (복원하면 위치와 크기가 그대로 돌아옵니다)
+  const isZoomed = zoomed && !maximized && !dialog
   const dragRef = useRef(null)
   const resizeRef = useRef(null)
 
@@ -44,7 +46,7 @@ export default function Window({
 
   const handleTitlePointerDown = (e) => {
     onFocus()
-    if (maximized) return
+    if (maximized || isZoomed) return
     dragRef.current = { startX: e.clientX, startY: e.clientY, originX: pos.x, originY: pos.y }
     window.addEventListener('pointermove', handleDragMove)
     window.addEventListener('pointerup', handleDragUp)
@@ -80,9 +82,9 @@ export default function Window({
 
   return (
     <div
-      className={`win${minimized ? ' win--minimized' : ''}${maximized ? ' win--maximized' : ''}${dialog ? ' win--dialog' : ''}${active ? '' : ' win--inactive'}`}
+      className={`win${minimized ? ' win--minimized' : ''}${maximized ? ' win--maximized' : ''}${isZoomed ? ' win--zoomed' : ''}${dialog ? ' win--dialog' : ''}${active ? '' : ' win--inactive'}`}
       style={
-        maximized
+        maximized || isZoomed
           ? { zIndex }
           : {
               left: pos.x,
@@ -94,12 +96,16 @@ export default function Window({
       }
       onPointerDownCapture={onFocus}
     >
-      <div className="win__titlebar" onPointerDown={handleTitlePointerDown}>
+      <div
+        className="win__titlebar"
+        onPointerDown={handleTitlePointerDown}
+        onDoubleClick={() => !maximized && !dialog && setZoomed((z) => !z)}
+      >
         <span className="win__icon">
           <PixelIcon name={icon} />
         </span>
         <span className="win__title">{title}</span>
-        <div className="win__controls">
+        <div className="win__controls" onDoubleClick={(e) => e.stopPropagation()}>
           {!dialog && (
             <button
               type="button"
@@ -109,6 +115,18 @@ export default function Window({
               title="최소화"
             >
               _
+            </button>
+          )}
+          {!dialog && !maximized && (
+            <button
+              type="button"
+              className="win__control"
+              onPointerDown={(e) => e.stopPropagation()}
+              onClick={() => setZoomed((z) => !z)}
+              title={isZoomed ? '이전 크기로' : '최대화'}
+              aria-label={isZoomed ? '이전 크기로' : '최대화'}
+            >
+              {isZoomed ? '❐' : '□'}
             </button>
           )}
           <button
@@ -123,7 +141,7 @@ export default function Window({
         </div>
       </div>
       <div className="win__body">{children}</div>
-      {!maximized && !dialog && (
+      {!maximized && !dialog && !isZoomed && (
         <div
           className="win__resize-handle"
           onPointerDown={handleResizePointerDown}

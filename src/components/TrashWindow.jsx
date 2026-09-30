@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import PixelIcon from './PixelIcon'
 import { useDialog } from './dialogContext'
+import MenuBar from './MenuBar'
 
 const CRUMPLE_MS = 1000 // 구겨지는 애니메이션(항목별 시차 포함)이 끝나는 시간
 
@@ -15,6 +16,7 @@ export default function TrashWindow({
   purgeBook,
   emptyTrash,
   onOpenLibrary,
+  onClose,
 }) {
   const [emptying, setEmptying] = useState(false)
   const [notice, setNotice] = useState('')
@@ -66,8 +68,20 @@ export default function TrashWindow({
     )
   }
 
+  const menus = [
+    {
+      label: '파일(F)',
+      items: [
+        { label: '휴지통 비우기', onClick: handleEmpty, disabled: trashedBooks.length === 0 || emptying },
+        { separator: true },
+        { label: '닫기', onClick: () => onClose() },
+      ],
+    },
+  ]
+
   return (
     <div className="trash">
+      {onClose && <MenuBar menus={menus} />}
       {trashedBooks.length === 0 ? (
         <p className="trash__empty">
           <PixelIcon name="trash" size={32} className="pixel-icon--inline" />
