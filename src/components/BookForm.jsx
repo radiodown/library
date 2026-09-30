@@ -15,6 +15,7 @@ const EMPTY_BOOK = {
   startDate: '',
   finishDate: '',
   rating: null,
+  dateUnknown: false,
   tags: [],
 }
 
@@ -249,6 +250,7 @@ export default function BookForm({
           <input
             type="date"
             value={form.startDate}
+            disabled={form.dateUnknown}
             onChange={(e) => update({ startDate: e.target.value })}
           />
         </label>
@@ -257,10 +259,25 @@ export default function BookForm({
           <input
             type="date"
             value={form.finishDate}
+            disabled={form.dateUnknown}
             onChange={(e) => update({ finishDate: e.target.value })}
           />
         </label>
       </div>
+      <label className="book-form__check">
+        <input
+          type="checkbox"
+          checked={form.dateUnknown}
+          onChange={(e) =>
+            update(
+              e.target.checked
+                ? { dateUnknown: true, startDate: '', finishDate: '' }
+                : { dateUnknown: false, startDate: todayString(), finishDate: todayString() },
+            )
+          }
+        />
+        읽은 시기를 모름 (예전에 읽어서 기억나지 않음)
+      </label>
 
       <label>
         별점 (1~5)

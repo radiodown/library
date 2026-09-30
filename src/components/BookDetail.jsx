@@ -44,13 +44,13 @@ export default function BookDetail({
       return {
         label: '▶ 읽기 시작',
         // 읽고 싶음 상태에서 미리 들어 있던 날짜는 무시하고 오늘부터 시작으로 기록
-        run: () => addOrUpdateBook({ ...book, status: 'reading', startDate: today, finishDate: '' }),
+        run: () => addOrUpdateBook({ ...book, status: 'reading', startDate: today, finishDate: '', dateUnknown: false }),
       }
     }
     if (book.status === 'reading') {
       return {
         label: '■ 읽기 완료',
-        run: () => addOrUpdateBook({ ...book, status: 'finished', finishDate: today }),
+        run: () => addOrUpdateBook({ ...book, status: 'finished', finishDate: today, dateUnknown: false }),
       }
     }
     return {
@@ -83,10 +83,14 @@ export default function BookDetail({
             <span className={`status-badge status-badge--${book.status}`}>{STATUS_LABEL[book.status]}</span>
             {book.rating ? <span className="book-detail__rating">{'★'.repeat(book.rating)}</span> : null}
           </p>
-          {(book.startDate || book.finishDate) && (
-            <p className="book-detail__dates">
-              {book.startDate || '?'} ~ {book.finishDate || '읽는 중'}
-            </p>
+          {book.dateUnknown ? (
+            <p className="book-detail__dates">읽은 시기 미상</p>
+          ) : (
+            (book.startDate || book.finishDate) && (
+              <p className="book-detail__dates">
+                {book.startDate || '?'} ~ {book.finishDate || '읽는 중'}
+              </p>
+            )
           )}
           {book.tags.length > 0 && (
             <p className="book-detail__tags">

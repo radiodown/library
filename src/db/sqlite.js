@@ -25,6 +25,7 @@ CREATE TABLE IF NOT EXISTS books (
   start_date TEXT,
   finish_date TEXT,
   rating INTEGER,
+  date_unknown INTEGER NOT NULL DEFAULT 0, -- 1이면 읽은 시기를 기억하지 못하는 책(날짜는 비워 둠)
   tags TEXT,
   created_at TEXT NOT NULL,
   updated_at TEXT NOT NULL,
@@ -52,6 +53,7 @@ CREATE TABLE IF NOT EXISTS readings (
   start_date TEXT,
   finish_date TEXT,
   rating INTEGER,
+  date_unknown INTEGER NOT NULL DEFAULT 0,
   memo TEXT,
   created_at TEXT NOT NULL,
   updated_at TEXT NOT NULL
@@ -83,6 +85,11 @@ function prepareDatabase(db) {
   ;['translator', 'publisher'].forEach((col) => {
     if (!bookColumns.includes(col)) db.run(`ALTER TABLE books ADD COLUMN ${col} TEXT`)
   })
+  // "읽은 시기 미상" 표시 이전에 만든 파일에도 컬럼을 추가합니다.
+  const DATE_UNKNOWN_DDL = 'ADD COLUMN date_unknown INTEGER NOT NULL DEFAULT 0'
+  if (!bookColumns.includes('date_unknown')) db.run(`ALTER TABLE books ${DATE_UNKNOWN_DDL}`)
+  const readingColumns = queryAll(db, 'PRAGMA table_info(readings)').map((c) => c.name)
+  if (!readingColumns.includes('date_unknown')) db.run(`ALTER TABLE readings ${DATE_UNKNOWN_DDL}`)
   CHILD_TABLES.forEach((table) => {
     db.run(`DELETE FROM ${table} WHERE book_id NOT IN (SELECT id FROM books)`)
   })
@@ -134,6 +141,7 @@ function parseBookRow(row) {
     startDate: row.start_date || '',
     finishDate: row.finish_date || '',
     rating: row.rating ?? null,
+    dateUnknown: !!row.date_unknown,
     tags: row.tags ? JSON.parse(row.tags) : [],
     createdAt: row.created_at,
     updatedAt: row.updated_at,
@@ -177,10 +185,14 @@ export function getBook(db, id) {
 export function upsertBook(db, book) {
   const now = new Date().toISOString()
   const tagsJson = JSON.stringify(book.tags || [])
+  // 읽은 시기를 모르는 책은 날짜를 남기지 않습니다. (남아 있으면 통계에 잘못 잡힘)
+  const dateUnknown = book.dateUnknown ? 1 : 0
+  const startDate = dateUnknown ? null : book.startDate || null
+  const finishDate = dateUnknown ? null : book.finishDate || null
 
   if (book.id) {
     db.run(
-      `UPDATE books SET title=?, author=?, translator=?, publisher=?, isbn=?, cover_url=?, status=?, start_date=?, finish_date=?, rating=?, tags=?, updated_at=?
+      `UPDATE books SET title=?, author=?, translator=?, publisher=?, isbn=?, cover_url=?, status=?, start_date=?, finish_date=?, rating=?, date_unknown=?, tags=?, updated_at=?
        WHERE id=?`,
       [
         book.title,
@@ -190,9 +202,10 @@ export function upsertBook(db, book) {
         book.isbn || null,
         book.coverUrl || null,
         book.status,
-        book.startDate || null,
-        book.finishDate || null,
+        startDate,
+        finishDate,
         book.rating ?? null,
+        dateUnknown,
         tagsJson,
         now,
         book.id,
@@ -202,8 +215,8 @@ export function upsertBook(db, book) {
   }
 
   db.run(
-    `INSERT INTO books (title, author, translator, publisher, isbn, cover_url, status, start_date, finish_date, rating, tags, created_at, updated_at)
-     VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+    `INSERT INTO books (title, author, translator, publisher, isbn, cover_url, status, start_date, finish_date, rating, date_unknown, tags, created_at, updated_at)
+     VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
     [
       book.title,
       book.author || null,
@@ -212,9 +225,10 @@ export function upsertBook(db, book) {
       book.isbn || null,
       book.coverUrl || null,
       book.status,
-      book.startDate || null,
-      book.finishDate || null,
+      startDate,
+      finishDate,
       book.rating ?? null,
+      dateUnknown,
       tagsJson,
       now,
       now,
@@ -313,6 +327,7 @@ function parseReadingRow(row) {
     startDate: row.start_date || '',
     finishDate: row.finish_date || '',
     rating: row.rating ?? null,
+    dateUnknown: !!row.date_unknown,
     memo: row.memo || '',
     createdAt: row.created_at,
   }
@@ -330,24 +345,26 @@ export function getReadings(db) {
 /** reading.id가 있으면 수정, 없으면 새로 추가합니다. */
 export function upsertReading(db, reading) {
   const now = new Date().toISOString()
+  const dateUnknown = reading.dateUnknown ? 1 : 0
   const values = [
-    reading.startDate || null,
-    reading.finishDate || null,
+    dateUnknown ? null : reading.startDate || null,
+    dateUnknown ? null : reading.finishDate || null,
     reading.rating ?? null,
+    dateUnknown,
     reading.memo || null,
   ]
 
   if (reading.id) {
     db.run(
-      'UPDATE readings SET start_date=?, finish_date=?, rating=?, memo=?, updated_at=? WHERE id=?',
+      'UPDATE readings SET start_date=?, finish_date=?, rating=?, date_unknown=?, memo=?, updated_at=? WHERE id=?',
       [...values, now, reading.id],
     )
     return reading.id
   }
 
   db.run(
-    `INSERT INTO readings (book_id, start_date, finish_date, rating, memo, created_at, updated_at)
-     VALUES (?,?,?,?,?,?,?)`,
+    `INSERT INTO readings (book_id, start_date, finish_date, rating, date_unknown, memo, created_at, updated_at)
+     VALUES (?,?,?,?,?,?,?,?)`,
     [reading.bookId, ...values, now, now],
   )
   const [{ id }] = queryAll(db, 'SELECT last_insert_rowid() as id')

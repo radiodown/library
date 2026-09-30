@@ -8,7 +8,7 @@ function ReadingForm({ initial, onSave, onCancel }) {
 
   const handleSubmit = (e) => {
     e.preventDefault()
-    if (form.startDate && form.finishDate && form.finishDate < form.startDate) {
+    if (!form.dateUnknown && form.startDate && form.finishDate && form.finishDate < form.startDate) {
       window.alert('완독일이 시작일보다 빠를 수 없습니다.')
       return
     }
@@ -25,6 +25,7 @@ function ReadingForm({ initial, onSave, onCancel }) {
         <input
           type="date"
           value={form.startDate}
+          disabled={form.dateUnknown}
           onChange={(e) => update({ startDate: e.target.value })}
         />
       </label>
@@ -33,8 +34,17 @@ function ReadingForm({ initial, onSave, onCancel }) {
         <input
           type="date"
           value={form.finishDate}
+          disabled={form.dateUnknown}
           onChange={(e) => update({ finishDate: e.target.value })}
         />
+      </label>
+      <label className="reading-form__check">
+        <input
+          type="checkbox"
+          checked={!!form.dateUnknown}
+          onChange={(e) => update({ dateUnknown: e.target.checked, startDate: '', finishDate: '' })}
+        />
+        읽은 시기를 모름
       </label>
       <label>
         별점
@@ -71,7 +81,7 @@ function ReadingRow({ label, reading, note, onEdit, onDelete }) {
       <span className="reading-list__no">{label}</span>
       <span className="reading-list__body">
         <span>
-          {reading.startDate || '?'} ~ {reading.finishDate || '읽는 중'}
+          {reading.dateUnknown ? '읽은 시기 미상' : `${reading.startDate || '?'} ~ ${reading.finishDate || '읽는 중'}`}
           {reading.rating ? <span className="book-detail__rating"> {'★'.repeat(reading.rating)}</span> : null}
         </span>
         {reading.memo && <span className="reading-list__memo">{reading.memo}</span>}
@@ -98,7 +108,7 @@ function ReadingRow({ label, reading, note, onEdit, onDelete }) {
 export default function ReadingHistory({ readOnly = false, book, readings, saveReading, removeReading }) {
   const [editing, setEditing] = useState(null) // null | 'new' | reading object
 
-  const hasFirst = book.startDate || book.finishDate || book.rating
+  const hasFirst = book.startDate || book.finishDate || book.rating || book.dateUnknown
 
   const handleSave = (form) => {
     saveReading({ ...form, id: editing === 'new' ? undefined : editing.id, bookId: book.id })

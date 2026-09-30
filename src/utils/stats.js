@@ -107,8 +107,9 @@ export function computeStats(books, reviewCounts, today, readings = []) {
         .filter((x) => x.days >= STALE_READING_DAYS)
         .sort((a, b) => b.days - a.days),
       noRating: finished.filter((b) => b.rating == null),
-      missingFinishDate: finished.filter((b) => !b.finishDate),
-      missingStartDate: reading.filter((b) => !b.startDate),
+      // 읽은 시기를 일부러 "모름"으로 표시한 책은 날짜 누락으로 보지 않습니다.
+      missingFinishDate: finished.filter((b) => !b.finishDate && !b.dateUnknown),
+      missingStartDate: reading.filter((b) => !b.startDate && !b.dateUnknown),
     },
   }
 }

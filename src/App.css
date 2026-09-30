@@ -1885,3 +1885,12 @@
     padding-top: 8px;
   }
 }
+
+/* "읽은 시기를 모름" 체크박스: 라벨 옆에 체크박스가 가로로 놓이게 합니다. */
+.book-form label.book-form__check,
+.reading-form label.reading-form__check {
+  flex-direction: row;
+  align-items: center;
+  gap: 6px;
+  font-weight: normal;
+}
