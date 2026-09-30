@@ -42,6 +42,12 @@ export function computeStats(books, reviewCounts, today, readings = []) {
     perMonth[year][month] += 1
   })
 
+  // 날짜별 완독 권수 (캘린더 히트맵용)
+  const perDay = {}
+  finishDates.forEach((d) => {
+    perDay[d] = (perDay[d] || 0) + 1
+  })
+
   // 데이터가 없는 중간 연도도 0으로 보여 줍니다.
   const yearKeys = Object.keys(perYear).map(Number)
   const years = []
@@ -96,6 +102,7 @@ export function computeStats(books, reviewCounts, today, readings = []) {
     recentFinished,
     years,
     perMonth,
+    perDay,
     ratingDist,
     topTags,
     // 관리가 필요한 책들

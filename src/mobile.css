@@ -289,8 +289,8 @@
   overflow-x: auto;
 }
 
-/* ---- 랭킹 ---- */
-.m-ranking {
+/* ---- 다음 책 ---- */
+.m-next {
   margin: 0;
   padding: 0;
   list-style: none;
@@ -298,7 +298,7 @@
   background: var(--win-light);
 }
 
-.m-content .m-ranking button {
+.m-content .m-next button {
   display: flex;
   align-items: center;
   gap: 10px;
@@ -310,7 +310,7 @@
   text-align: left;
 }
 
-.m-ranking__no {
+.m-next__no {
   flex: none;
   width: 28px;
   font-size: 18px;
@@ -318,7 +318,7 @@
   text-align: center;
 }
 
-.m-ranking__cover {
+.m-next__cover {
   flex: none;
   width: 40px;
   height: 58px;
@@ -326,14 +326,14 @@
   background: var(--win-face-light);
 }
 
-.m-ranking__info {
+.m-next__info {
   display: flex;
   flex-direction: column;
   gap: 2px;
   min-width: 0;
 }
 
-.m-ranking__info span {
+.m-next__info span {
   color: var(--win-text-muted);
   font-size: 12px;
 }

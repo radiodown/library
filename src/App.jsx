@@ -9,12 +9,13 @@ import LibraryWindow from './components/LibraryWindow'
 import ReviewQuickWindow from './components/ReviewQuickWindow'
 import ReviewEditWindow from './components/ReviewEditWindow'
 import ReviewViewWindow from './components/ReviewViewWindow'
-import RankingWindow from './components/RankingWindow'
+import NextBooksWindow from './components/NextBooksWindow'
 import StatsWindow from './components/StatsWindow'
 import QuoteOfDayWindow from './components/QuoteOfDayWindow'
 import MobileLibrary from './components/MobileLibrary'
-import MobileRanking from './components/MobileRanking'
+import MobileNextBooks from './components/MobileNextBooks'
 import MobileOpenPrompt from './components/MobileOpenPrompt'
+import SearchWindow from './components/SearchWindow'
 import CreditsWindow from './components/CreditsWindow'
 import DriveStatusToast from './components/DriveStatusToast'
 import TrashWindow from './components/TrashWindow'
@@ -101,6 +102,14 @@ export default function App() {
       focus: { bookId, nonce: Date.now() },
     })
 
+  const openSearchWindow = () =>
+    openWindow('search', {
+      title: '검색',
+      icon: 'search',
+      initialPosition: { x: 110, y: 70 },
+      initialSize: { width: 760, height: 540 },
+    })
+
   const openTrashWindow = () =>
     openWindow('trash', {
       title: '휴지통',
@@ -139,10 +148,10 @@ export default function App() {
       initialSize: { width: 640, height: 520 },
     })
 
-  const openRankingWindow = () =>
-    openWindow('ranking', {
-      title: '서재 랭킹',
-      icon: 'trophy',
+  const openNextBooksWindow = () =>
+    openWindow('next-books', {
+      title: '다음 책',
+      icon: 'bookmark',
       initialPosition: { x: 120, y: 80 },
       initialSize: { width: 760, height: 520 },
     })
@@ -241,8 +250,8 @@ export default function App() {
 
   const startMenuItems = [
     { icon: 'library', label: '서재', onClick: openLibraryWindow },
-    { icon: 'notepad', label: '감상문 작성', onClick: openReviewWindow },
-    { icon: 'trophy', label: '서재 랭킹', onClick: openRankingWindow },
+    { icon: 'search', label: '검색', onClick: openSearchWindow },
+    { icon: 'bookmark', label: '다음 책', onClick: openNextBooksWindow },
     { icon: 'chart', label: '독서 통계', onClick: openStatsWindow },
     { icon: 'quote', label: '오늘의 인용구', onClick: openQuoteOfDayWindow },
     { separator: true },
@@ -263,7 +272,8 @@ export default function App() {
   // 모바일: 서재/랭킹/통계/인용구 창은 읽기 전용 화면으로 보여 줍니다.
   const mobileMenuItems = [
     { icon: 'library', label: '서재', onClick: openLibraryWindow },
-    { icon: 'trophy', label: '서재 랭킹', onClick: openRankingWindow },
+    { icon: 'search', label: '검색', onClick: openSearchWindow },
+    { icon: 'bookmark', label: '다음 책', onClick: openNextBooksWindow },
     { icon: 'chart', label: '독서 통계', onClick: openStatsWindow },
     { icon: 'quote', label: '오늘의 인용구', onClick: openQuoteOfDayWindow },
     { separator: true },
@@ -279,7 +289,7 @@ export default function App() {
   ]
 
   const renderMobileContent = (w) => {
-    if (!['library', 'ranking', 'stats'].includes(w.id)) return undefined
+    if (!['library', 'next-books', 'stats'].includes(w.id)) return undefined
 
     if (!libraryDb.isReady) {
       return (
@@ -309,11 +319,11 @@ export default function App() {
           onViewReview={openReviewViewWindow}
         />
       )
-    } else if (w.id === 'ranking') {
+    } else if (w.id === 'next-books') {
       content = (
-        <MobileRanking
+        <MobileNextBooks
           books={libraryDb.books}
-          rankingIds={libraryDb.rankingIds}
+          nextBookIds={libraryDb.nextBookIds}
           onOpenBook={openLibraryAtBook}
         />
       )
@@ -338,7 +348,7 @@ export default function App() {
     }
 
     if (w.id === 'library') {
-      return <LibraryWindow {...libraryDb} onOpenReviewWindow={openReviewEditWindow}
+      return <LibraryWindow {...libraryDb} focus={w.focus} onOpenReviewWindow={openReviewEditWindow}
           onViewReview={openReviewViewWindow}
         />
     }
@@ -376,6 +386,20 @@ export default function App() {
         />
       )
     }
+    if (w.id === 'search') {
+      return (
+        <SearchWindow
+          isReady={libraryDb.isReady}
+          books={libraryDb.books}
+          quotes={libraryDb.quotes}
+          listAllReviews={libraryDb.listAllReviews}
+          reviewsVersion={libraryDb.reviewsVersion}
+          onOpenLibrary={isMobile ? openLibrary : openLibraryWindow}
+          onOpenBook={openLibraryAtBook}
+          onOpenReview={openReviewViewWindow}
+        />
+      )
+    }
     if (w.id === 'credits') {
       return (
         <CreditsWindow
@@ -409,14 +433,15 @@ export default function App() {
         />
       )
     }
-    if (w.id === 'ranking') {
+    if (w.id === 'next-books') {
       return (
-        <RankingWindow
+        <NextBooksWindow
           isReady={libraryDb.isReady}
           books={libraryDb.books}
-          rankingIds={libraryDb.rankingIds}
-          saveRanking={libraryDb.saveRanking}
+          nextBookIds={libraryDb.nextBookIds}
+          saveNextBooks={libraryDb.saveNextBooks}
           onOpenLibrary={openLibraryWindow}
+          onOpenBook={openLibraryAtBook}
         />
       )
     }
@@ -467,7 +492,7 @@ export default function App() {
             )}
             <DesktopIcon icon="folder-open" label="서재 열기" onActivate={openLibrary} tapToOpen />
             <DesktopIcon icon="library" label="서재" onActivate={openLibraryWindow} tapToOpen />
-            <DesktopIcon icon="trophy" label="랭킹" onActivate={openRankingWindow} tapToOpen />
+            <DesktopIcon icon="bookmark" label="다음 책" onActivate={openNextBooksWindow} tapToOpen />
             <DesktopIcon icon="chart" label="통계" onActivate={openStatsWindow} tapToOpen />
             <DesktopIcon icon="quote" label="인용구" onActivate={openQuoteOfDayWindow} tapToOpen />
           </>

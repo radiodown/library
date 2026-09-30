@@ -11,11 +11,12 @@ import {
   restoreBook as restoreBookRow,
   emptyTrash as emptyTrashRows,
   getReviewsForBook,
+  getAllReviews,
   upsertReview,
   deleteReview,
   getReviewCounts as queryReviewCounts,
-  getRankingIds,
-  setRankingIds,
+  getNextBookIds,
+  setNextBookIds,
   getReadings,
   upsertReading,
   deleteReading,
@@ -46,7 +47,7 @@ export function useLibraryDb({ rememberLast = false } = {}) {
   const savingRef = useRef(false)
 
   const [books, setBooks] = useState([])
-  const [rankingIds, setRankingIdsState] = useState([]) // 1위가 맨 앞
+  const [nextBookIds, setNextBookIdsState] = useState([]) // 맨 앞이 가장 먼저 읽을 책
   const [trashedBooks, setTrashedBooks] = useState([]) // 휴지통에 있는 책
   const [readings, setReadings] = useState([]) // 모든 책의 다시 읽기(2회차~)
   const [quotes, setQuotes] = useState([]) // 모든 책의 인용구
@@ -95,7 +96,7 @@ export function useLibraryDb({ rememberLast = false } = {}) {
     if (!dbRef.current) return
     setBooks(getBooks(dbRef.current))
     setTrashedBooks(getTrashedBooks(dbRef.current))
-    setRankingIdsState(getRankingIds(dbRef.current))
+    setNextBookIdsState(getNextBookIds(dbRef.current))
     setReadings(getReadings(dbRef.current))
     setQuotes(getQuotes(dbRef.current))
   }, [])
@@ -330,11 +331,11 @@ export function useLibraryDb({ rememberLast = false } = {}) {
     refreshAll()
   }, [refreshAll])
 
-  const saveRanking = useCallback((bookIds) => {
+  const saveNextBooks = useCallback((bookIds) => {
     if (!dbRef.current) return
-    setRankingIds(dbRef.current, bookIds)
+    setNextBookIds(dbRef.current, bookIds)
     markDirty()
-    setRankingIdsState(bookIds)
+    setNextBookIdsState(bookIds)
   }, [])
 
   const saveReading = useCallback(
@@ -373,6 +374,11 @@ export function useLibraryDb({ rememberLast = false } = {}) {
   const listReviews = useCallback((bookId) => {
     if (!dbRef.current) return []
     return getReviewsForBook(dbRef.current, bookId)
+  }, [])
+
+  const listAllReviews = useCallback(() => {
+    if (!dbRef.current) return []
+    return getAllReviews(dbRef.current)
   }, [])
 
   const getReviewCounts = useCallback(() => {
@@ -416,8 +422,8 @@ export function useLibraryDb({ rememberLast = false } = {}) {
     restoreBook,
     purgeBook,
     emptyTrash,
-    rankingIds,
-    saveRanking,
+    nextBookIds,
+    saveNextBooks,
     readings,
     saveReading,
     removeReading,
@@ -431,6 +437,7 @@ export function useLibraryDb({ rememberLast = false } = {}) {
     addOrUpdateBook,
     removeBook,
     listReviews,
+    listAllReviews,
     getReviewCounts,
     saveReview,
     removeReview,

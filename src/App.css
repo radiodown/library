@@ -894,18 +894,25 @@
 }
 
 /* ====== 서재 랭킹 ====== */
-.ranking {
+.next-books {
   display: flex;
-  gap: 12px;
+  flex-direction: column;
   height: 100%;
 }
 
-.ranking--empty {
+.next-books__cols {
+  display: flex;
+  flex: 1;
+  gap: 12px;
+  min-height: 0;
+}
+
+.next-books--empty {
   flex-direction: column;
   align-items: flex-start;
 }
 
-.ranking__col {
+.next-books__col {
   display: flex;
   flex: 1;
   flex-direction: column;
@@ -913,12 +920,12 @@
   min-height: 0;
 }
 
-.ranking__col h3 {
+.next-books__col h3 {
   margin: 0 0 6px;
   font-size: 12px;
 }
 
-.ranking__list {
+.next-books__list {
   flex: 1;
   margin: 0;
   padding: 0;
@@ -928,7 +935,7 @@
   background: var(--win-light);
 }
 
-.ranking__item {
+.next-books__item {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -937,18 +944,18 @@
   cursor: grab;
 }
 
-.ranking__item.is-over {
+.next-books__item.is-over {
   box-shadow: inset 0 3px 0 var(--win-selection);
 }
 
-.ranking__no {
+.next-books__no {
   flex: none;
   width: 24px;
   font-weight: bold;
   text-align: center;
 }
 
-.ranking__cover {
+.next-books__cover {
   flex: none;
   width: 30px;
   height: 44px;
@@ -956,7 +963,7 @@
   background: var(--win-face-light);
 }
 
-.ranking__info {
+.next-books__info {
   display: flex;
   flex: 1;
   flex-direction: column;
@@ -964,20 +971,20 @@
   min-width: 0;
 }
 
-.ranking__info strong,
-.ranking__info span {
+.next-books__info strong,
+.next-books__info span {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.ranking__actions {
+.next-books__actions {
   display: flex;
   flex: none;
   gap: 3px;
 }
 
-.ranking__empty {
+.next-books__empty {
   padding: 12px;
   color: var(--win-text-muted);
   text-align: center;
@@ -1893,4 +1900,214 @@
   align-items: center;
   gap: 6px;
   font-weight: normal;
+}
+
+/* ====== 검색 창 ====== */
+.search-window {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 8px;
+  height: 100%;
+  box-sizing: border-box;
+}
+
+.search-window--empty {
+  align-items: flex-start;
+}
+
+.search-window__bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.search-window__bar input {
+  flex: 1;
+  min-width: 0;
+}
+
+.search-window__filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  font-size: 12px;
+}
+
+.search-window__filters label {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.search-window__tabs {
+  display: flex;
+  gap: 2px;
+}
+
+.search-window__tabs button.is-active {
+  border-style: inset;
+  font-weight: bold;
+}
+
+.search-window__results {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  background: var(--win-light);
+  border: 2px inset var(--win-face);
+  padding: 6px;
+  color: var(--win-text);
+}
+
+.search-window__results h3 {
+  margin: 6px 0 4px;
+  font-size: 13px;
+}
+
+.search-window__results ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.search-window__results li button {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  width: 100%;
+  padding: 4px 6px;
+  text-align: left;
+  background: transparent;
+  border: 1px solid transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.search-window__results li button:hover,
+.search-window__results li button:focus-visible {
+  background: var(--win-selection);
+  color: var(--win-selection-text);
+}
+
+.search-window__title {
+  font-weight: bold;
+}
+
+.search-window__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+}
+
+.search-window__snippet {
+  font-size: 12px;
+  word-break: break-word;
+}
+
+.search-window__results mark {
+  background: #ffe066;
+  color: #000;
+}
+
+.search-window__hint {
+  margin: 8px 4px;
+  font-size: 12px;
+  color: var(--win-text-muted);
+}
+
+/* ====== 다음 책: 무작위 뽑기 ====== */
+.next-books__pick {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding-bottom: 8px;
+}
+
+.next-books__pick-hint {
+  font-size: 12px;
+  color: var(--win-text-muted);
+}
+
+.next-books__result {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 10px;
+  flex: 1;
+  min-width: 0;
+  padding: 4px 8px;
+  background: var(--win-light);
+  border: 2px inset var(--win-face);
+  font-size: 13px;
+}
+
+.next-books__result-actions {
+  display: flex;
+  gap: 4px;
+}
+
+/* ====== 독서 캘린더 히트맵 ====== */
+.heatmap__scroll {
+  overflow-x: auto;
+  padding: 6px;
+  background: var(--win-light);
+  border: 2px inset var(--win-face);
+}
+
+.heatmap__months,
+.heatmap__grid {
+  display: grid;
+  gap: 2px;
+  width: max-content;
+}
+
+.heatmap__months {
+  grid-template-rows: 14px;
+  margin-bottom: 2px;
+  font-size: 10px;
+  color: var(--win-text-muted);
+  white-space: nowrap;
+}
+
+.heatmap__grid {
+  grid-template-rows: repeat(7, 12px);
+  grid-auto-flow: column;
+}
+
+.heatmap__cell {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+}
+
+/* 한 가지 색(청록)의 진하기로만 권수를 나타냅니다. */
+.heatmap__cell--l0 {
+  background: #e4e4e4;
+  outline: 1px solid #c8c8c8;
+  outline-offset: -1px;
+}
+.heatmap__cell--l1 { background: #b7dcd8; }
+.heatmap__cell--l2 { background: #6db5ae; }
+.heatmap__cell--l3 { background: #2f8a82; }
+.heatmap__cell--l4 { background: #0b5a53; }
+.heatmap__cell--lf,
+.heatmap__cell--blank {
+  background: transparent;
+}
+
+.heatmap__legend {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 3px;
+  margin-top: 4px;
+  font-size: 11px;
+  color: var(--win-text-muted);
 }

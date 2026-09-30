@@ -32,9 +32,18 @@ export default function LibraryWindow({
   removeQuote,
   onOpenReviewWindow,
   onViewReview,
+  focus,
 }) {
-  const [selectedBookId, setSelectedBookId] = useState(null)
+  const [selectedBookId, setSelectedBookId] = useState(focus?.bookId ?? null)
   const [bookFormMode, setBookFormMode] = useState(null) // null | 'new' | book object
+  const [seenNonce, setSeenNonce] = useState(focus?.nonce)
+
+  // 검색/랭킹 창에서 "이 책 보기"를 누르면 이미 열려 있는 서재 창도 그 책으로 이동합니다. (렌더 중 상태 갱신 패턴)
+  if (focus?.nonce !== seenNonce) {
+    setSeenNonce(focus?.nonce)
+    setSelectedBookId(focus?.bookId ?? null)
+    setBookFormMode(null)
+  }
 
   const selectedBook = books.find((b) => b.id === selectedBookId) || null
   // App이 reviewsVersion 변경으로 다시 렌더링될 때마다 이 값도 최신 DB 상태로 새로 계산됩니다.

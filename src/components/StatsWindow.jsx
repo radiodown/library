@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import ReadingHeatmap from './ReadingHeatmap'
 import { computeStats, todayString, STALE_READING_DAYS } from '../utils/stats'
 
 const TABS = [
@@ -93,7 +94,7 @@ export default function StatsWindow({
     )
   }
 
-  const { totals, years, perMonth, ratingDist, topTags, attention } = stats
+  const { totals, years, perMonth, perDay, ratingDist, topTags, attention } = stats
 
   const attentionTotal =
     attention.noReview.length +
@@ -243,6 +244,11 @@ export default function StatsWindow({
                 caption={`${monthYear}년 월별 완독 권수`}
                 items={monthCounts.map((count, i) => ({ label: `${i + 1}월`, value: count }))}
               />
+            </section>
+
+            <section className="stats__section">
+              <h3>독서 캘린더 ({monthYear}년)</h3>
+              <ReadingHeatmap year={monthYear} perDay={perDay} today={todayString()} />
             </section>
           </>
         )}

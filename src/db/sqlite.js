@@ -41,7 +41,8 @@ CREATE TABLE IF NOT EXISTS reviews (
   updated_at TEXT NOT NULL
 );
 
-CREATE TABLE IF NOT EXISTS rankings (
+-- 다음에 읽을 책. position이 작을수록 먼저 읽을 책입니다.
+CREATE TABLE IF NOT EXISTS next_books (
   book_id INTEGER PRIMARY KEY REFERENCES books(id) ON DELETE CASCADE,
   position INTEGER NOT NULL
 );
@@ -69,7 +70,7 @@ CREATE TABLE IF NOT EXISTS quotes (
 );
 `
 
-const CHILD_TABLES = ['reviews', 'rankings', 'readings', 'quotes']
+const CHILD_TABLES = ['reviews', 'next_books', 'readings', 'quotes']
 
 /**
  * 스키마 생성 + 고아 데이터 정리 + 외래키 활성화.
@@ -78,6 +79,8 @@ const CHILD_TABLES = ['reviews', 'rankings', 'readings', 'quotes']
  */
 function prepareDatabase(db) {
   db.run(SCHEMA)
+  // 서재 랭킹 기능은 "다음 책"으로 바뀌었습니다. 예전 랭킹 데이터는 더 쓰지 않으므로 지웁니다.
+  db.run('DROP TABLE IF EXISTS rankings')
   // 휴지통 기능 이전에 만든 파일에는 deleted_at 컬럼이 없으므로 추가합니다. (CREATE IF NOT EXISTS로는 안 붙음)
   const bookColumns = queryAll(db, 'PRAGMA table_info(books)').map((c) => c.name)
   if (!bookColumns.includes('deleted_at')) db.run('ALTER TABLE books ADD COLUMN deleted_at TEXT')
@@ -243,23 +246,26 @@ export function deleteBook(db, id) {
   db.run('DELETE FROM books WHERE id = ?', [id])
 }
 
-/** 랭킹에 꽂힌 책 id를 순서대로 반환합니다. (1위가 맨 앞) */
-export function getRankingIds(db) {
+/**
+ * "다음 책"에 꽂힌 책 id를 순서대로 반환합니다. (맨 앞이 가장 먼저 읽을 책)
+ * 읽기 시작해도 남아 있고, 완독한 책은 목록에서 빠집니다.
+ */
+export function getNextBookIds(db) {
   return queryAll(
     db,
-    `SELECT r.book_id FROM rankings r JOIN books b ON b.id = r.book_id
-     WHERE b.deleted_at IS NULL ORDER BY r.position ASC`,
+    `SELECT n.book_id FROM next_books n JOIN books b ON b.id = n.book_id
+     WHERE b.deleted_at IS NULL AND b.status != 'finished' ORDER BY n.position ASC`,
   ).map((r) => r.book_id)
 }
 
-/** 랭킹 전체를 주어진 순서(1위가 맨 앞)로 교체합니다. */
-export function setRankingIds(db, bookIds) {
+/** "다음 책" 전체를 주어진 순서로 교체합니다. */
+export function setNextBookIds(db, bookIds) {
   db.run('BEGIN')
   try {
-    // 휴지통에 있는 책의 순위는 남겨 둬야 복원했을 때 대략 원래 자리로 돌아옵니다.
-    db.run('DELETE FROM rankings WHERE book_id IN (SELECT id FROM books WHERE deleted_at IS NULL)')
+    // 휴지통에 있는 책의 자리는 남겨 둬야 복원했을 때 대략 원래 자리로 돌아옵니다.
+    db.run('DELETE FROM next_books WHERE book_id IN (SELECT id FROM books WHERE deleted_at IS NULL)')
     bookIds.forEach((bookId, i) => {
-      db.run('INSERT INTO rankings (book_id, position) VALUES (?, ?)', [bookId, i + 1])
+      db.run('INSERT INTO next_books (book_id, position) VALUES (?, ?)', [bookId, i + 1])
     })
     db.run('COMMIT')
   } catch (err) {
@@ -305,6 +311,15 @@ export function upsertReview(db, review) {
   )
   const [{ id }] = queryAll(db, 'SELECT last_insert_rowid() as id')
   return id
+}
+
+/** 휴지통에 있지 않은 책의 모든 감상문. 전체 검색에 씁니다. */
+export function getAllReviews(db) {
+  return queryAll(
+    db,
+    `SELECT * FROM reviews WHERE book_id IN (SELECT id FROM books WHERE deleted_at IS NULL)
+     ORDER BY updated_at DESC`,
+  ).map(parseReviewRow)
 }
 
 /** 책별 감상문 개수를 { [bookId]: count } 로 반환합니다. */
