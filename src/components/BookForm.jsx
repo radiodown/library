@@ -4,6 +4,7 @@ import { todayString } from '../utils/stats'
 import { findDuplicateBook } from '../utils/duplicates'
 import { useDialog } from './dialogContext'
 import PixelIcon from './PixelIcon'
+import StarRatingInput from './StarRatingInput'
 
 const EMPTY_BOOK = {
   title: '',
@@ -283,16 +284,11 @@ export default function BookForm({
         읽은 시기를 모름 (예전에 읽어서 기억나지 않음)
       </label>
 
-      <label>
-        별점 (1~5)
-        <input
-          type="number"
-          min="1"
-          max="5"
-          value={form.rating ?? ''}
-          onChange={(e) => update({ rating: e.target.value })}
-        />
-      </label>
+      {/* label로 감싸면 별을 누를 때 안의 "지우기" 버튼까지 눌리므로 div로 묶습니다 */}
+      <div className="form-field" role="group" aria-label="별점">
+        <span className="form-field__label">별점</span>
+        <StarRatingInput value={form.rating} onChange={(rating) => update({ rating })} />
+      </div>
 
       <label>
         태그 (쉼표로 구분)

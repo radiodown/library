@@ -60,10 +60,13 @@ export function computeStats(books, reviewCounts, today, readings = []) {
   }
 
   const rated = books.filter((b) => b.rating != null)
-  const ratingDist = [1, 2, 3, 4, 5].map((r) => ({
-    rating: r,
-    count: rated.filter((b) => b.rating === r).length,
-  }))
+  // 1~5는 항상, 0.5 단위(4.5 등)는 그런 별점을 준 책이 있을 때만 막대를 만듭니다.
+  const ratingDist = [0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5]
+    .filter((r) => Number.isInteger(r) || rated.some((b) => b.rating === r))
+    .map((r) => ({
+      rating: r,
+      count: rated.filter((b) => b.rating === r).length,
+    }))
 
   const tagCounts = {}
   books.forEach((b) => b.tags.forEach((t) => (tagCounts[t] = (tagCounts[t] || 0) + 1)))

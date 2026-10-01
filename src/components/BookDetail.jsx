@@ -5,6 +5,7 @@ import ReadingHistory from './ReadingHistory'
 import QuoteList from './QuoteList'
 import ItemActions from './ItemActions'
 import StatusIcon from './StatusIcon'
+import Stars from './Stars'
 import { useContextMenu } from '../hooks/useContextMenu'
 import { splitNames } from '../utils/people'
 
@@ -85,7 +86,7 @@ export default function BookDetail({
           )}
           <p>
             <StatusIcon status={book.status} withLabel />
-            {book.rating ? <span className="book-detail__rating">{'★'.repeat(book.rating)}</span> : null}
+            <Stars value={book.rating} className="book-detail__rating" />
           </p>
           {book.dateUnknown ? (
             <p className="book-detail__dates">읽은 시기 미상</p>

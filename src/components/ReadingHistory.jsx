@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { useAddRequest } from '../hooks/useAddRequest'
 import ItemActions from './ItemActions'
+import StarRatingInput from './StarRatingInput'
+import Stars from './Stars'
 import { todayString } from '../utils/stats'
 import { useDialog } from './dialogContext'
 
@@ -51,17 +53,10 @@ function ReadingForm({ initial, onSave, onCancel }) {
         />
         읽은 시기를 모름
       </label>
-      <label>
-        별점
-        <select value={form.rating ?? ''} onChange={(e) => update({ rating: e.target.value })}>
-          <option value="">없음</option>
-          {[1, 2, 3, 4, 5].map((n) => (
-            <option key={n} value={n}>
-              {'★'.repeat(n)}
-            </option>
-          ))}
-        </select>
-      </label>
+      <div className="form-field" role="group" aria-label="별점">
+        <span className="form-field__label">별점</span>
+        <StarRatingInput value={form.rating === '' ? null : form.rating} onChange={(rating) => update({ rating })} />
+      </div>
       <label className="reading-form__memo">
         메모
         <input
@@ -87,7 +82,7 @@ function ReadingRow({ label, reading, onEdit, onDelete }) {
       <span className="reading-list__body">
         <span>
           {reading.dateUnknown ? '읽은 시기 미상' : `${reading.startDate || '?'} ~ ${reading.finishDate || '읽는 중'}`}
-          {reading.rating ? <span className="book-detail__rating"> {'★'.repeat(reading.rating)}</span> : null}
+          <Stars value={reading.rating} className="book-detail__rating" />
         </span>
         {reading.memo && <span className="reading-list__memo">{reading.memo}</span>}
       </span>

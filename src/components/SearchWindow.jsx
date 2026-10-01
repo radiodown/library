@@ -4,6 +4,7 @@ import { toPreviewText } from '../utils/reviewPreview'
 import { splitNames } from '../utils/people'
 import MenuBar from './MenuBar'
 import PixelIcon from './PixelIcon'
+import Stars from './Stars'
 
 const STATUS_LABEL = {
   wishlist: '읽고 싶음',
@@ -412,7 +413,7 @@ export default function SearchWindow({
                 <span className="search-window__meta">
                   {item.sub}
                   <span className={`status-badge status-badge--${item.status}`}>{STATUS_LABEL[item.status]}</span>
-                  {item.rating ? <span className="book-detail__rating">{'★'.repeat(item.rating)}</span> : null}
+                  <Stars value={item.rating} className="book-detail__rating" />
                 </span>
               )}
               {view !== 'small' && item.type !== 'book' && (
@@ -609,7 +610,7 @@ export default function SearchWindow({
                       <td>{TYPE_LABEL[item.type]}</td>
                       <td>{item.author}</td>
                       <td>{STATUS_LABEL[item.status]}</td>
-                      <td>{item.rating ? '★'.repeat(item.rating) : ''}</td>
+                      <td><Stars value={item.rating} /></td>
                       <td>
                         <Highlight text={item.snippet} terms={terms} />
                       </td>

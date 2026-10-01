@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import Fuse from 'fuse.js'
 import StatusIcon from './StatusIcon'
+import Stars from './Stars'
 
 const STATUS_LABEL = {
   wishlist: '읽고 싶음',
@@ -29,7 +30,7 @@ const SORTS = {
   default: { label: '최근 수정순', searchLabel: '정확도순' },
   title: { label: '제목', kind: 'text', get: (b) => b.title, desc: false },
   author: { label: '저자', kind: 'text', get: (b) => b.author, desc: false },
-  rating: { label: '별점', kind: 'rating', get: (b) => b.rating, desc: true, show: (b) => (b.rating ? '★'.repeat(b.rating) : null) },
+  rating: { label: '별점', kind: 'rating', get: (b) => b.rating, desc: true, show: (b) => (b.rating ? <Stars value={b.rating} /> : null) },
   finished: { label: '완독일', kind: 'date', get: (b) => b.finishDate, desc: true, show: (b) => b.finishDate || null },
   started: { label: '시작일', kind: 'date', get: (b) => b.startDate, desc: true, show: (b) => b.startDate || null },
   added: { label: '추가일', kind: 'date', get: (b) => b.createdAt, desc: true, show: (b) => localDate(b.createdAt) },

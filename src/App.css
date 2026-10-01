@@ -3124,3 +3124,90 @@ textarea:focus-visible {
   gap: 4px;
   vertical-align: middle;
 }
+
+/* ====== 별점 (0.5 단위) ====== */
+/* 반 별: 옅은 빈 별(자리 차지) 위에 채운 별의 왼쪽 절반을 겹칩니다. 채운 쪽 색은 주변 별을 따릅니다. */
+.stars__half {
+  position: relative;
+  display: inline-block;
+}
+
+.stars__half-empty {
+  opacity: 0.3;
+}
+
+.stars__half-fill {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 50%;
+  overflow: hidden;
+}
+
+/* 폼에서 label 대신 쓰는 묶음 (안에 버튼이 있는 입력용) */
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  font-size: 12px;
+}
+
+.form-field__label {
+  font-weight: bold;
+  color: var(--win-text);
+}
+
+/* 별점 입력: 별 다섯 개, 왼쪽 절반은 반 별, 오른쪽 절반은 온 별 */
+.star-input {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.star-input__stars {
+  display: inline-flex;
+  padding: 1px 4px;
+  background: var(--win-light);
+  border: 2px inset var(--win-face);
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.star-input__stars:focus-visible {
+  outline: 1px dotted var(--win-text);
+  outline-offset: 1px;
+}
+
+.star-input__star {
+  position: relative;
+  font-size: 18px;
+  line-height: 1.1;
+  color: #c0c0c0; /* 빈 별 */
+}
+
+.star-input__star.is-full {
+  color: #b8860b;
+}
+
+/* 반 별: 회색 별 위에 금색 별의 왼쪽 절반을 겹칩니다 */
+.star-input__star.is-half::before {
+  content: '★';
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 50%;
+  overflow: hidden;
+  color: #b8860b;
+}
+
+.star-input__value {
+  min-width: 34px;
+  color: var(--win-text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.star-input__clear {
+  padding: 1px 8px;
+  font-size: 11px;
+}
