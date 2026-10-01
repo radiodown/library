@@ -25,6 +25,60 @@ export function useMediaQuery(query) {
   )
 }
 
+// ---- PC 화면 모드 ----
+// 모바일에서도 PC용 데스크탑 화면을 쓰고 싶을 때 켭니다. 브라우저의 "데스크톱 사이트 요청"처럼
+// 뷰포트를 PC 폭으로 넓혀 화면 전체를 축소해 보여 줍니다. 설정은 브라우저에 기억합니다.
+const DESKTOP_MODE_KEY = 'library98-desktop-mode'
+const DESKTOP_VIEWPORT_WIDTH = 1280
+const DEFAULT_VIEWPORT = 'width=device-width, initial-scale=1.0, viewport-fit=cover'
+
+function readDesktopMode() {
+  try {
+    return localStorage.getItem(DESKTOP_MODE_KEY) === '1'
+  } catch {
+    return false
+  }
+}
+
+let desktopMode = readDesktopMode()
+const listeners = new Set()
+
+function applyViewport() {
+  const meta = document.querySelector('meta[name="viewport"]')
+  if (!meta) return
+  meta.setAttribute(
+    'content',
+    desktopMode ? `width=${DESKTOP_VIEWPORT_WIDTH}, viewport-fit=cover` : DEFAULT_VIEWPORT,
+  )
+}
+
+// 첫 렌더 전에 뷰포트를 맞춰 두어야 모바일 화면이 잠깐 보였다가 바뀌지 않습니다.
+if (typeof document !== 'undefined') applyViewport()
+
+export function setDesktopMode(on) {
+  desktopMode = on
+  try {
+    if (on) localStorage.setItem(DESKTOP_MODE_KEY, '1')
+    else localStorage.removeItem(DESKTOP_MODE_KEY)
+  } catch {
+    // 저장소를 못 써도 이번 탭에서는 전환됩니다.
+  }
+  applyViewport()
+  listeners.forEach((fn) => fn())
+}
+
+function subscribeDesktopMode(fn) {
+  listeners.add(fn)
+  return () => listeners.delete(fn)
+}
+
+export function useDesktopMode() {
+  return useSyncExternalStore(subscribeDesktopMode, () => desktopMode, () => false)
+}
+
+/** PC 화면 모드가 켜져 있으면 모바일 기기여도 데스크탑 화면을 씁니다. */
 export function useIsMobile() {
-  return useMediaQuery(MOBILE_QUERY)
+  const matches = useMediaQuery(MOBILE_QUERY)
+  const desktop = useDesktopMode()
+  return matches && !desktop
 }

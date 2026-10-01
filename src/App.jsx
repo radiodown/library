@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useLibraryDb } from './hooks/useLibraryDb'
 import { useWindowManager } from './hooks/useWindowManager'
-import { useIsMobile } from './hooks/useMediaQuery'
+import { setDesktopMode, useDesktopMode, useIsMobile } from './hooks/useMediaQuery'
 import DesktopIcon from './components/DesktopIcon'
 import Window from './components/Window'
 import Taskbar from './components/Taskbar'
@@ -34,8 +34,10 @@ const BOOT_KEY = 'library98-booted'
 
 export default function App() {
   const isMobile = useIsMobile()
+  // 모바일에서 켠 PC 화면 모드. 켜져 있으면 시작 메뉴에 "모바일 화면으로"를 보여 줍니다.
+  const desktopMode = useDesktopMode()
   // 모바일은 파일을 조용히 다시 열 수 없어서, 연 서재의 사본을 브라우저에 보관해 다음에 바로 열게 합니다.
-  const libraryDb = useLibraryDb({ rememberLast: isMobile })
+  const libraryDb = useLibraryDb({ rememberLast: isMobile || desktopMode })
   const { isReady, isDirty, saveLibrary, openLibrary } = libraryDb
   const { windows, openWindow, closeWindow: closeWindowNow, closeAll, focusWindow, toggleMinimize } =
     useWindowManager()
@@ -339,6 +341,7 @@ export default function App() {
         ]
       : []),
     { separator: true },
+    ...(desktopMode ? [{ icon: 'computer', label: '모바일 화면으로', onClick: () => setDesktopMode(false) }] : []),
     { icon: 'computer', label: '시스템 종료...', onClick: openShutdownDialog },
   ]
 
@@ -358,6 +361,7 @@ export default function App() {
       ? [{ icon: 'book-open', label: '마지막 서재 불러오기', onClick: libraryDb.restoreLastLibrary }]
       : []),
     { separator: true },
+    { icon: 'computer', label: 'PC 화면으로', onClick: () => setDesktopMode(true) },
     { icon: 'computer', label: '시스템 종료...', onClick: openShutdownDialog },
   ]
 
@@ -630,26 +634,29 @@ export default function App() {
             <DesktopIcon icon="quote" label="인용구" onActivate={openQuoteOfDayWindow} tapToOpen />
           </>
         ) : (
+          // PC 화면 모드(터치 기기)에서는 두 번 탭이 확대로 먹히므로 한 번 탭으로 실행합니다.
           <>
-            <DesktopIcon icon="floppy" label="서재 저장" onActivate={handleSaveIcon} />
-            <DesktopIcon icon="folder-open" label="서재 불러오기" onActivate={openLibrary} />
+            <DesktopIcon icon="floppy" label="서재 저장" onActivate={handleSaveIcon} tapToOpen={desktopMode} />
+            <DesktopIcon icon="folder-open" label="서재 불러오기" onActivate={openLibrary} tapToOpen={desktopMode} />
             <DesktopIcon
               icon="library"
               label="서재"
               onActivate={openLibraryWindow}
+              tapToOpen={desktopMode}
               contextItems={[
                 { label: '열기', bold: true, onClick: openLibraryWindow },
                 { separator: true },
                 { label: '속성', onClick: openPropertiesWindow },
               ]}
             />
-            <DesktopIcon icon="notepad" label="감상문" onActivate={openReviewWindow} />
+            <DesktopIcon icon="notepad" label="감상문" onActivate={openReviewWindow} tapToOpen={desktopMode} />
             <DesktopIcon
               icon={libraryDb.trashedBooks.length ? 'trash-full' : 'trash'}
               label={libraryDb.trashedBooks.length ? `휴지통 (${libraryDb.trashedBooks.length})` : '휴지통'}
               onActivate={openTrashWindow}
+              tapToOpen={desktopMode}
             />
-            <DesktopIcon icon="blocks" label="테트리스" onActivate={openTetrisWindow} />
+            <DesktopIcon icon="blocks" label="테트리스" onActivate={openTetrisWindow} tapToOpen={desktopMode} />
           </>
         )}
       </div>
