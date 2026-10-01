@@ -17,6 +17,7 @@ export default function ReviewViewWindow({ bookTitle, review, onEdit }) {
   return (
     <div className="review-view-window">
       <div className="review-view-window__head">
+        {review.title && <h2>{review.title}</h2>}
         <p className="review-quick__active-book">
           <PixelIcon name="book-open" className="pixel-icon--inline" /> <strong>{bookTitle}</strong>
         </p>

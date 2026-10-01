@@ -25,6 +25,7 @@ import PowerScreen from './components/PowerScreen'
 import ShutdownDialog from './components/ShutdownDialog'
 import TetrisWindow from './components/TetrisWindow'
 import SaveStatusTray from './components/SaveStatusTray'
+import { readReviewDraft } from './utils/reviewDrafts'
 import './App.css'
 import './mobile.css' // App.css 뒤에 불러와야 모바일 덮어쓰기가 우선합니다
 
@@ -36,8 +37,15 @@ export default function App() {
   // 모바일은 파일을 조용히 다시 열 수 없어서, 연 서재의 사본을 브라우저에 보관해 다음에 바로 열게 합니다.
   const libraryDb = useLibraryDb({ rememberLast: isMobile })
   const { isReady, isDirty, saveLibrary, openLibrary } = libraryDb
-  const { windows, openWindow, closeWindow, closeAll, focusWindow, toggleMinimize } =
+  const { windows, openWindow, closeWindow: closeWindowNow, closeAll, focusWindow, toggleMinimize } =
     useWindowManager()
+  const dialog = useDialog()
+  const editorsRef = useRef(new Map())
+  const closeWindow = async (id) => {
+    const editor = editorsRef.current.get(id)
+    if (editor && !(await editor.confirmClose())) return
+    closeWindowNow(id)
+  }
 
   // 전원 상태: 'booting'(시작 화면) → 'on' → 'shuttingDown' → 'off'(꺼진 화면) → 다시 'booting'
   const [power, setPower] = useState(() => {
@@ -82,11 +90,17 @@ export default function App() {
       if (!(e.ctrlKey || e.metaKey) || e.altKey || e.code !== 'KeyS') return
       e.preventDefault()
       if (e.repeat || !isReady) return
+      const active = windows.filter((w) => !w.minimized).reduce((top, w) => !top || w.zIndex > top.zIndex ? w : top, null)
+      const editor = active && editorsRef.current.get(active.id)
+      if (editor && !e.shiftKey) {
+        editor.save()
+        return
+      }
       saveLibrary(e.shiftKey)
     }
     window.addEventListener('keydown', handler)
     return () => window.removeEventListener('keydown', handler)
-  }, [isReady, saveLibrary])
+  }, [isReady, saveLibrary, windows])
 
   const openLibraryWindow = () =>
     openWindow('library', {
@@ -157,7 +171,10 @@ export default function App() {
   }
 
   // 종료/다시 시작: 열려 있던 창을 모두 닫고 화면을 덮습니다. 서재 데이터는 메모리에 그대로 남습니다.
-  const handleShutdown = (mode) => {
+  const handleShutdown = async (mode) => {
+    for (const editor of [...editorsRef.current.values()]) {
+      if (!(await editor.confirmClose())) return
+    }
     restartRef.current = mode === 'restart'
     closeAll()
     setPower('shuttingDown')
@@ -236,14 +253,27 @@ export default function App() {
     })
 
   // 서재 창의 "감상문 추가/수정"은 인라인이 아니라 별도의 뜨는 창으로 엽니다.
-  const openReviewEditWindow = (book, review) => {
-    const id = `review-edit-${review ? review.id : `new-${book.id}`}`
-    const cascade = windows.length * 20
+  const openReviewEditWindow = (book, review, recoveryKey) => {
+    if (recoveryKey) {
+      const draft = readReviewDraft(recoveryKey)
+      review = libraryDb.listReviews(book.id).find((r) => r.id === draft?.reviewId && r.createdAt === draft?.reviewCreatedAt) || null
+    }
+    const existing = windows.find((w) => w.id.startsWith('review-edit-') && w.librarySession === libraryDb.librarySession &&
+      (review ? w.review?.id === review.id : recoveryKey ? w.recoveryKey === recoveryKey : w.bookId === book.id && !w.review))
+    if (existing) {
+      openWindow(existing.id)
+      return
+    }
+    const id = `review-edit-${libraryDb.librarySession}-${crypto.randomUUID()}`
+    const width = Math.min(900, window.innerWidth - 32)
+    const height = Math.min(700, window.innerHeight - 90)
     openWindow(id, {
       title: `감상문 — ${book.title}`,
       icon: 'notepad',
-      initialPosition: { x: 200 + cascade, y: 140 + cascade },
-      initialSize: { width: 640, height: 520 },
+      initialPosition: { x: Math.max(16, (window.innerWidth - width) / 2), y: 32 },
+      initialSize: { width, height },
+      librarySession: libraryDb.librarySession,
+      recoveryKey,
       bookId: book.id,
       bookTitle: book.title,
       review: review || null,
@@ -275,8 +305,6 @@ export default function App() {
       trash: openTrashWindow,
       properties: openPropertiesWindow,
     })[name]?.()
-
-  const dialog = useDialog()
 
   const handleSaveIcon = () => {
     if (!isReady) {
@@ -405,10 +433,13 @@ export default function App() {
     if (w.id === 'review') {
       return (
         <ReviewQuickWindow
+          key={libraryDb.librarySession}
           isReady={libraryDb.isReady}
           books={libraryDb.books}
+          libraryId={libraryDb.libraryId}
+          listReviews={libraryDb.listReviews}
           addOrUpdateBook={libraryDb.addOrUpdateBook}
-          saveReview={libraryDb.saveReview}
+          onOpenReview={openReviewEditWindow}
           onOpenLibrary={openLibraryWindow}
         />
       )
@@ -545,13 +576,26 @@ export default function App() {
       return isMobile ? <div className="m-content m-reader">{view}</div> : view
     }
     if (w.id.startsWith('review-edit-')) {
+      if (w.librarySession !== libraryDb.librarySession) {
+        return <p>서재가 바뀌었습니다. 원래 서재를 열고 같은 책에서 초안을 이어 써 주세요.</p>
+      }
+      const book = libraryDb.books.find((b) => b.id === w.bookId)
+      if (!book) return <p>책이 삭제되었습니다. 초안은 보관됩니다. 책을 복원한 뒤 다시 열어 주세요.</p>
       return (
         <ReviewEditWindow
-          bookTitle={w.bookTitle}
-          bookId={w.bookId}
+          book={book}
+          libraryId={libraryDb.libraryId}
+          listReviews={libraryDb.listReviews}
+          quotes={libraryDb.quotes}
           review={w.review}
+          recoveryKey={w.recoveryKey}
           saveReview={libraryDb.saveReview}
           onDone={() => closeWindow(w.id)}
+          onSaved={(review) => openWindow(w.id, { review })}
+          registerEditor={(editor) => {
+            editorsRef.current.set(w.id, editor)
+            return () => editorsRef.current.delete(w.id)
+          }}
         />
       )
     }

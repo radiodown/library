@@ -4,6 +4,7 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
+    "test": "playwright test",
     "dev": "vite",
     "build": "vite build",
     "lint": "oxlint",
@@ -19,6 +20,7 @@
     "sql.js": "^1.14.2"
   },
   "devDependencies": {
+    "@playwright/test": "^1.63.0",
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.7",
     "@vitejs/plugin-react": "^6.1.1",

@@ -161,6 +161,7 @@ export default function BookDetail({
               }
             >
               <div className="review-list__meta">
+                {review.title && <strong>{review.title}</strong>}
                 <span className="format-badge">{review.format}</span>
                 <span>{review.content.length.toLocaleString()}자</span>
                 <span>{new Date(review.updatedAt).toLocaleString()}</span>

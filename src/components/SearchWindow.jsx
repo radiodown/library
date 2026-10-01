@@ -178,7 +178,7 @@ export default function SearchWindow({
     () =>
       listAllReviews()
         .filter((r) => bookMap.has(r.bookId))
-        .map((r) => ({ ...r, text: toPreviewText(r.format, r.content, Infinity) }))
+        .map((r) => ({ ...r, text: [r.title, toPreviewText(r.format, r.content, Infinity)].filter(Boolean).join(' ') }))
         .filter((r) => r.text !== EMPTY_TEXT),
     // reviewsVersion은 값이 아니라 "감상문이 바뀌었다"는 신호입니다.
     // eslint-disable-next-line react-hooks/exhaustive-deps

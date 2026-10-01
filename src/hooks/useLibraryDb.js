@@ -3,6 +3,7 @@ import {
   createNewDatabase,
   loadDatabaseFromBuffer,
   exportDatabase,
+  getLibraryId,
   getBooks,
   upsertBook,
   deleteBook,
@@ -65,6 +66,13 @@ export function useLibraryDb({ rememberLast = false } = {}) {
   // 감상문이 다른 창(floating window)에서 저장/삭제될 수 있으므로, 값 자체보다
   // "바뀌었다"는 신호가 필요한 컴포넌트(예: BookDetail)가 다시 렌더링되도록 매번 증가시킵니다.
   const [reviewsVersion, setReviewsVersion] = useState(0)
+  const [libraryId, setLibraryId] = useState(null)
+  const [librarySession, setLibrarySession] = useState(0)
+
+  const beginLibrarySession = useCallback(() => {
+    setLibraryId(getLibraryId(dbRef.current))
+    setLibrarySession((n) => n + 1)
+  }, [])
 
   const setTarget = useCallback((target) => {
     targetRef.current = target
@@ -122,6 +130,7 @@ export function useLibraryDb({ rememberLast = false } = {}) {
     () =>
       runGuarded(async () => {
         dbRef.current = await createNewDatabase()
+        beginLibrarySession()
         fileHandleRef.current = null
         driveFileIdRef.current = null
         setTarget(null)
@@ -130,7 +139,7 @@ export function useLibraryDb({ rememberLast = false } = {}) {
         setIsReady(true)
         refreshAll()
       }),
-    [runGuarded, refreshAll, setTarget],
+    [runGuarded, refreshAll, setTarget, beginLibrarySession],
   )
 
   const openLibrary = useCallback(
@@ -138,6 +147,7 @@ export function useLibraryDb({ rememberLast = false } = {}) {
       runGuarded(async () => {
         const { buffer, handle, name } = await openDbFile()
         dbRef.current = await loadDatabaseFromBuffer(buffer)
+        beginLibrarySession()
         if (rememberLast) saveLastLibrary(name, new Uint8Array(buffer)).then((info) => info && setLastLibrary(info))
         fileHandleRef.current = handle
         driveFileIdRef.current = null
@@ -148,7 +158,7 @@ export function useLibraryDb({ rememberLast = false } = {}) {
         setIsReady(true)
         refreshAll()
       }),
-    [runGuarded, refreshAll, rememberLast, setTarget],
+    [runGuarded, refreshAll, rememberLast, setTarget, beginLibrarySession],
   )
 
   // Google Drive에 올려 둔 서재를 내려받아 엽니다.
@@ -161,6 +171,7 @@ export function useLibraryDb({ rememberLast = false } = {}) {
           if (!result) throw new Error('Google Drive에 저장된 서재가 없습니다. 먼저 서재를 열고 "Drive에 저장"을 눌러 주세요.')
         })
         dbRef.current = await loadDatabaseFromBuffer(result.buffer)
+        beginLibrarySession()
         if (rememberLast) saveLastLibrary(result.name, new Uint8Array(result.buffer)).then((info) => info && setLastLibrary(info))
         fileHandleRef.current = null
         driveFileIdRef.current = result.fileId
@@ -171,7 +182,7 @@ export function useLibraryDb({ rememberLast = false } = {}) {
         setIsReady(true)
         refreshAll()
       }),
-    [runGuarded, refreshAll, rememberLast, setTarget, withDriveStatus],
+    [runGuarded, refreshAll, rememberLast, setTarget, withDriveStatus, beginLibrarySession],
   )
 
   // 브라우저에 보관된 마지막 서재 사본을 엽니다. (파일 핸들이 없으므로 저장은 다운로드가 됩니다)
@@ -181,6 +192,7 @@ export function useLibraryDb({ rememberLast = false } = {}) {
         const last = await loadLastLibrary()
         if (!last) throw new Error('보관된 서재가 없습니다. "서재 파일 열기"로 불러와 주세요.')
         dbRef.current = await loadDatabaseFromBuffer(last.bytes)
+        beginLibrarySession()
         fileHandleRef.current = null
         driveFileIdRef.current = null
         setTarget(null)
@@ -190,7 +202,7 @@ export function useLibraryDb({ rememberLast = false } = {}) {
         setIsReady(true)
         refreshAll()
       }),
-    [runGuarded, refreshAll, setTarget],
+    [runGuarded, refreshAll, setTarget, beginLibrarySession],
   )
 
   // 앱을 열면 보관된 사본이 있는지 확인해 "마지막 서재 불러오기" 버튼에 쓸 정보를 준비합니다.
@@ -392,8 +404,10 @@ export function useLibraryDb({ rememberLast = false } = {}) {
     return queryReviewCounts(dbRef.current)
   }, [])
 
-  const saveReview = useCallback((review) => {
-    if (!dbRef.current) return null
+  const saveReview = useCallback((review, expectedLibraryId) => {
+    if (!dbRef.current || (expectedLibraryId && getLibraryId(dbRef.current) !== expectedLibraryId)) {
+      throw new Error('서재가 바뀌었습니다. 원래 서재를 다시 열어 초안을 복구해 주세요.')
+    }
     const id = upsertReview(dbRef.current, review)
     markDirty()
     setReviewsVersion((v) => v + 1)
@@ -408,6 +422,8 @@ export function useLibraryDb({ rememberLast = false } = {}) {
   }, [])
 
   return {
+    libraryId,
+    librarySession,
     isReady,
     isDirty,
     busy,

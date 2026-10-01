@@ -13,6 +13,7 @@ function loadSqlJs() {
 }
 
 const SCHEMA = `
+CREATE TABLE IF NOT EXISTS library_meta (key TEXT PRIMARY KEY, value TEXT NOT NULL);
 CREATE TABLE IF NOT EXISTS books (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   title TEXT NOT NULL,
@@ -96,6 +97,8 @@ function prepareDatabase(db) {
   CHILD_TABLES.forEach((table) => {
     db.run(`DELETE FROM ${table} WHERE book_id NOT IN (SELECT id FROM books)`)
   })
+  const reviewColumns = queryAll(db, 'PRAGMA table_info(reviews)').map((c) => c.name)
+  if (!reviewColumns.includes('title')) db.run("ALTER TABLE reviews ADD COLUMN title TEXT NOT NULL DEFAULT ''")
   db.run('PRAGMA foreign_keys = ON')
 }
 
@@ -104,6 +107,7 @@ export async function createNewDatabase() {
   const SQL = await loadSqlJs()
   const db = new SQL.Database()
   prepareDatabase(db)
+  db.run('INSERT INTO library_meta (key, value) VALUES (?, ?)', ['id', crypto.randomUUID()])
   return db
 }
 
@@ -112,7 +116,17 @@ export async function loadDatabaseFromBuffer(buffer) {
   const SQL = await loadSqlJs()
   const db = new SQL.Database(new Uint8Array(buffer))
   prepareDatabase(db) // 스키마가 없으면 생성(IF NOT EXISTS) — 향후 마이그레이션 지점
+  if (!getLibraryId(db)) {
+    // 기존 파일은 첫 저장 전에도 같은 파일을 다시 열면 같은 초안을 찾습니다.
+    const hash = await crypto.subtle.digest('SHA-256', new Uint8Array(buffer))
+    const id = Array.from(new Uint8Array(hash), (n) => n.toString(16).padStart(2, '0')).join('')
+    db.run('INSERT INTO library_meta (key, value) VALUES (?, ?)', ['id', id])
+  }
   return db
+}
+
+export function getLibraryId(db) {
+  return queryAll(db, "SELECT value FROM library_meta WHERE key = 'id'")[0]?.value || null
 }
 
 /** DB를 바이너리(Uint8Array)로 내보냅니다. 파일로 저장할 때 사용합니다. */
@@ -304,6 +318,7 @@ function parseReviewRow(row) {
   return {
     id: row.id,
     bookId: row.book_id,
+    title: row.title || '',
     format: row.format,
     content: row.content || '',
     createdAt: row.created_at,
@@ -320,20 +335,28 @@ export function getReviewsForBook(db, bookId) {
 /** review.id가 있으면 수정, 없으면 새로 추가합니다. 저장된 review의 id를 반환합니다. */
 export function upsertReview(db, review) {
   const now = new Date().toISOString()
+  if (!queryAll(db, 'SELECT id FROM books WHERE id = ? AND deleted_at IS NULL', [review.bookId]).length) {
+    throw new Error('이 책을 찾을 수 없습니다. 초안을 보관한 뒤 서재를 확인해 주세요.')
+  }
 
   if (review.id) {
-    db.run(`UPDATE reviews SET format=?, content=?, updated_at=? WHERE id=?`, [
+    if (!queryAll(db, 'SELECT id FROM reviews WHERE id = ? AND book_id = ?', [review.id, review.bookId]).length) {
+      throw new Error('이 감상문이 삭제되었거나 다른 책에 속해 있습니다. 초안은 유지됩니다.')
+    }
+    db.run(`UPDATE reviews SET title=?, format=?, content=?, updated_at=? WHERE id=? AND book_id=?`, [
+      review.title || '',
       review.format,
       review.content,
       now,
       review.id,
+      review.bookId,
     ])
     return review.id
   }
 
   db.run(
-    `INSERT INTO reviews (book_id, format, content, created_at, updated_at) VALUES (?,?,?,?,?)`,
-    [review.bookId, review.format, review.content, now, now],
+    `INSERT INTO reviews (book_id, title, format, content, created_at, updated_at) VALUES (?,?,?,?,?,?)`,
+    [review.bookId, review.title || '', review.format, review.content, now, now],
   )
   const [{ id }] = queryAll(db, 'SELECT last_insert_rowid() as id')
   return id
