@@ -1,4 +1,6 @@
 import { useState } from 'react'
+import { useAddRequest } from '../hooks/useAddRequest'
+import ItemActions from './ItemActions'
 import { todayString } from '../utils/stats'
 import { useDialog } from './dialogContext'
 
@@ -91,14 +93,12 @@ function ReadingRow({ label, reading, note, onEdit, onDelete }) {
         {note && <span className="reading-list__memo">{note}</span>}
       </span>
       {onEdit && (
-        <span className="reading-list__actions">
-          <button type="button" onClick={onEdit}>
-            수정
-          </button>
-          <button type="button" className="danger" onClick={onDelete}>
-            삭제
-          </button>
-        </span>
+        <ItemActions
+          actions={[
+            { icon: 'pencil', label: '회차 수정', onClick: onEdit },
+            { icon: 'trash-lid', label: '회차 삭제', onClick: onDelete, danger: true },
+          ]}
+        />
       )}
     </li>
   )
@@ -108,8 +108,16 @@ function ReadingRow({ label, reading, note, onEdit, onDelete }) {
  * 책의 독서 회차. 1회차는 책 정보의 시작일/완독일/별점이고(정보 수정에서 바꿉니다),
  * 2회차부터는 여기서 추가하는 "다시 읽기" 기록입니다.
  */
-export default function ReadingHistory({ readOnly = false, book, readings, saveReading, removeReading }) {
+export default function ReadingHistory({
+  readOnly = false,
+  book,
+  readings,
+  saveReading,
+  removeReading,
+  addRequest, // 서재 창 도구 모음/메뉴의 "회차 추가" 요청 번호
+}) {
   const [editing, setEditing] = useState(null) // null | 'new' | reading object
+  const sectionRef = useAddRequest(addRequest, () => setEditing('new'))
 
   const hasFirst = book.startDate || book.finishDate || book.rating || book.dateUnknown
 
@@ -129,14 +137,9 @@ export default function ReadingHistory({ readOnly = false, book, readings, saveR
   if (readOnly && !hasFirst && readings.length === 0) return null
 
   return (
-    <div className="book-detail__section">
+    <div className="book-detail__section" ref={sectionRef}>
       <div className="book-detail__section-header">
         <h3>독서 회차</h3>
-        {!readOnly && (
-          <button type="button" onClick={() => setEditing('new')} disabled={editing !== null}>
-            + 다시 읽기
-          </button>
-        )}
       </div>
 
       {!hasFirst && readings.length === 0 && editing === null && (

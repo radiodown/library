@@ -53,7 +53,7 @@ export default function MobileLibrary({ books, readings, quotes, listReviews, fo
 
       {/* 목록은 계속 마운트해 두고 숨깁니다. 상세를 보고 돌아와도 검색어/필터가 유지됩니다. */}
       <div hidden={Boolean(book)}>
-        <BookList books={books} selectedBookId={null} onSelectBook={openBook} onAddBook={() => {}} />
+        <BookList books={books} selectedBookId={null} onSelectBook={openBook} />
       </div>
     </div>
   )

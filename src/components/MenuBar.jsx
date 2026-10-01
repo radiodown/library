@@ -2,7 +2,8 @@ import { useEffect, useRef, useState } from 'react'
 
 /**
  * Windows 98 프로그램 위쪽의 "파일 편집 보기 도움말" 메뉴 줄.
- * menus: [{ label, items: [{ label, onClick, shortcut?, disabled? } | { separator: true }] }]
+ * menus: [{ label, items: [{ label, onClick, shortcut?, disabled?, checked? } | { separator: true }] }]
+ * checked가 true/false인 항목은 켜고 끄는 항목이며, 켜져 있으면 왼쪽에 체크 표시가 붙습니다.
  * 마우스: 누르면 열리고, 하나가 열려 있으면 다른 메뉴 위에 올리기만 해도 바뀝니다.
  * 키보드: ←/→로 메뉴 사이, ↑/↓로 항목 사이를 이동하고 Enter로 실행, Esc로 닫습니다.
  */
@@ -21,7 +22,7 @@ export default function MenuBar({ menus }) {
   }, [openIndex])
 
   const focusItem = (menuIndex, offset) => {
-    const items = [...rootRef.current.querySelectorAll(`[data-menu="${menuIndex}"] [role="menuitem"]:not(:disabled)`)]
+    const items = [...rootRef.current.querySelectorAll(`[data-menu="${menuIndex}"] :is([role="menuitem"], [role="menuitemcheckbox"]):not(:disabled)`)]
     if (items.length === 0) return
     const current = items.indexOf(document.activeElement)
     const next = current === -1 ? (offset > 0 ? 0 : items.length - 1) : (current + offset + items.length) % items.length
@@ -70,7 +71,8 @@ export default function MenuBar({ menus }) {
                   <li key={item.label} role="none">
                     <button
                       type="button"
-                      role="menuitem"
+                      role={item.checked === undefined ? 'menuitem' : 'menuitemcheckbox'}
+                      aria-checked={item.checked}
                       className="context-menu__item menubar__item"
                       disabled={item.disabled}
                       onClick={() => {
@@ -78,6 +80,11 @@ export default function MenuBar({ menus }) {
                         item.onClick()
                       }}
                     >
+                      {item.checked && (
+                        <span className="menubar__check" aria-hidden="true">
+                          ✓
+                        </span>
+                      )}
                       <span>{item.label}</span>
                       {item.shortcut && <span className="menubar__shortcut">{item.shortcut}</span>}
                     </button>

@@ -216,13 +216,13 @@
   display: none; /* 창 제목에 이미 있고, 모바일은 책 추가를 하지 않습니다 */
 }
 
-.m-content .book-list__filters {
-  gap: 6px;
+/* 손가락으로 누르기 쉽게 탭을 높입니다 */
+.m-content .book-list__tab {
+  padding: 8px 2px;
 }
 
-.m-content .book-list__filters button {
-  flex: 1;
-  padding: 4px 6px;
+.m-content .book-list__tab.is-active {
+  padding: 9px 4px 10px;
 }
 
 .m-content .book-list__items li {

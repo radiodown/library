@@ -3,14 +3,10 @@ import { useDialog } from './dialogContext'
 import { toPreviewText } from '../utils/reviewPreview'
 import ReadingHistory from './ReadingHistory'
 import QuoteList from './QuoteList'
-import { todayString } from '../utils/stats'
+import ItemActions from './ItemActions'
+import StatusIcon from './StatusIcon'
+import { useContextMenu } from '../hooks/useContextMenu'
 import { splitNames } from '../utils/people'
-
-const STATUS_LABEL = {
-  wishlist: '읽고 싶음',
-  reading: '읽는 중',
-  finished: '완독',
-}
 
 /** 저자/역자/출판사 이름들. onSearchBy가 있으면 이름을 눌러 그 사람(출판사)의 책을 모아 볼 수 있습니다. */
 function PersonLinks({ kind, names, onSearchBy }) {
@@ -33,7 +29,10 @@ function PersonLinks({ kind, names, onSearchBy }) {
   ))
 }
 
-/** 선택된 책의 정보와 감상문 목록. 감상문 작성/수정은 별도의 뜨는 창에서 이루어집니다. */
+/**
+ * 선택된 책의 정보와 감상문 목록. 감상문 작성/수정은 별도의 뜨는 창에서 이루어집니다.
+ * 읽기 시작, 회차/인용구/감상문 추가, 수정, 삭제는 서재 창의 도구 모음과 메뉴에 있습니다.
+ */
 export default function BookDetail({
   readOnly = false, // 모바일: 보기만 가능하고 작성/수정/삭제 버튼을 숨깁니다
   book,
@@ -44,48 +43,14 @@ export default function BookDetail({
   removeReading,
   saveQuote,
   removeQuote,
-  addOrUpdateBook,
   removeReview,
-  onAddReview,
   onEditReview,
   onViewReview,
-  onEditBook,
-  onDeleteBook,
   onSearchBy, // (kind: 'author'|'translator'|'publisher', name) => void
+  addRequest, // { kind: 'reading'|'quote', bookId, nonce } 도구 모음/메뉴에서 "추가"를 누르면 바뀝니다
 }) {
-  const today = todayString()
-  // 다시 읽는 중인 회차: 시작은 했지만 아직 완독일이 없는 재독 기록
-  const activeReread = readings.find((r) => r.startDate && !r.finishDate)
-
-  // 상태에 맞는 "지금 할 일" 버튼 하나. 클릭하면 오늘 날짜로 자동 기록합니다.
-  const progressAction = (() => {
-    if (activeReread) {
-      return {
-        label: `■ ${readings.indexOf(activeReread) + 2}회차 읽기 완료`,
-        run: () => saveReading({ ...activeReread, finishDate: today }),
-      }
-    }
-    if (book.status === 'wishlist') {
-      return {
-        label: '▶ 읽기 시작',
-        // 읽고 싶음 상태에서 미리 들어 있던 날짜는 무시하고 오늘부터 시작으로 기록
-        run: () => addOrUpdateBook({ ...book, status: 'reading', startDate: today, finishDate: '', dateUnknown: false }),
-      }
-    }
-    if (book.status === 'reading') {
-      return {
-        label: '■ 읽기 완료',
-        run: () => addOrUpdateBook({ ...book, status: 'finished', finishDate: today, dateUnknown: false }),
-      }
-    }
-    return {
-      label: '↻ 다시 읽기 시작',
-      run: () =>
-        saveReading({ bookId: book.id, startDate: today, finishDate: '', rating: null, memo: '' }),
-    }
-  })()
-
   const dialog = useDialog()
+  const contextMenu = useContextMenu()
 
   const handleDeleteReview = async (id) => {
     if (!(await dialog.confirm('이 감상문을 삭제할까요?', { title: '감상문 삭제', okLabel: '삭제' }))) return
@@ -119,7 +84,7 @@ export default function BookDetail({
             </p>
           )}
           <p>
-            <span className={`status-badge status-badge--${book.status}`}>{STATUS_LABEL[book.status]}</span>
+            <StatusIcon status={book.status} withLabel />
             {book.rating ? <span className="book-detail__rating">{'★'.repeat(book.rating)}</span> : null}
           </p>
           {book.dateUnknown ? (
@@ -140,22 +105,6 @@ export default function BookDetail({
               ))}
             </p>
           )}
-          {!readOnly && (
-            <div className="book-detail__actions">
-              <button
-                type="button"
-                className="book-detail__progress"
-                title={`오늘(${today})로 기록됩니다`}
-                onClick={progressAction.run}
-              >
-                {progressAction.label}
-              </button>
-              <button onClick={onEditBook}>정보 수정</button>
-              <button onClick={onDeleteBook} className="danger">
-                책 삭제
-              </button>
-            </div>
-          )}
         </div>
       </div>
 
@@ -165,6 +114,7 @@ export default function BookDetail({
         readings={readings}
         saveReading={saveReading}
         removeReading={removeReading}
+        addRequest={addRequest?.kind === 'reading' && addRequest.bookId === book.id ? addRequest.nonce : null}
       />
 
       <QuoteList
@@ -173,38 +123,57 @@ export default function BookDetail({
         quotes={quotes}
         saveQuote={saveQuote}
         removeQuote={removeQuote}
+        addRequest={addRequest?.kind === 'quote' && addRequest.bookId === book.id ? addRequest.nonce : null}
       />
 
       <div className="book-detail__reviews">
         <div className="book-detail__reviews-header">
           <h3>독서감상문</h3>
-          {!readOnly && <button onClick={onAddReview}>+ 감상문 추가</button>}
         </div>
 
         {reviews.length === 0 && (
           <p className="book-detail__empty">
-            {readOnly ? '작성된 감상문이 없습니다.' : '아직 작성한 감상문이 없습니다.'}
+            {readOnly ? '작성된 감상문이 없습니다.' : '아직 작성한 감상문이 없습니다. 도구 모음의 "감상문"으로 써 보세요.'}
           </p>
         )}
 
         <ul className="review-list">
           {reviews.map((review) => (
-            <li key={review.id} className="review-list__item">
+            <li
+              key={review.id}
+              className="review-list__item"
+              title="더블클릭하면 감상문을 엽니다"
+              // 98식: 항목을 더블클릭하면 엽니다. (아이콘 버튼을 빠르게 두 번 누른 경우는 제외)
+              onDoubleClick={(e) => !e.target.closest('button') && onViewReview(review)}
+              onMouseDown={(e) => e.detail > 1 && e.preventDefault()} // 더블클릭이 글자를 선택하지 않게
+              onContextMenu={(e) =>
+                contextMenu.open(e, [
+                  { label: '보기', bold: true, onClick: () => onViewReview(review) },
+                  ...(readOnly
+                    ? []
+                    : [
+                        { label: '수정...', onClick: () => onEditReview(review) },
+                        { separator: true },
+                        { label: '삭제', onClick: () => handleDeleteReview(review.id) },
+                      ]),
+                ])
+              }
+            >
               <div className="review-list__meta">
                 <span className="format-badge">{review.format}</span>
                 <span>{review.content.length.toLocaleString()}자</span>
                 <span>{new Date(review.updatedAt).toLocaleString()}</span>
-                <div className="review-list__item-actions">
-                  <button onClick={() => onViewReview(review)}>보기</button>
-                  {!readOnly && (
-                    <>
-                      <button onClick={() => onEditReview(review)}>수정</button>
-                      <button onClick={() => handleDeleteReview(review.id)} className="danger">
-                        삭제
-                      </button>
-                    </>
-                  )}
-                </div>
+                <ItemActions
+                  actions={[
+                    { icon: 'eye', label: '감상문 보기', onClick: () => onViewReview(review) },
+                    ...(readOnly
+                      ? []
+                      : [
+                          { icon: 'pencil', label: '감상문 수정', onClick: () => onEditReview(review) },
+                          { icon: 'trash-lid', label: '감상문 삭제', onClick: () => handleDeleteReview(review.id), danger: true },
+                        ]),
+                  ]}
+                />
               </div>
               <p className="review-list__preview">
                 {toPreviewText(review.format, review.content)}
@@ -213,6 +182,7 @@ export default function BookDetail({
           ))}
         </ul>
       </div>
+      {contextMenu.menu}
     </div>
   )
 }

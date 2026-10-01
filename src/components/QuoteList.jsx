@@ -1,4 +1,7 @@
 import { useState } from 'react'
+import { useAddRequest } from '../hooks/useAddRequest'
+import { useContextMenu } from '../hooks/useContextMenu'
+import ItemActions from './ItemActions'
 import { useDialog } from './dialogContext'
 
 /** 인용구 한 건을 입력/수정하는 인라인 폼. Ctrl/⌘+Enter로도 저장할 수 있습니다. */
@@ -54,8 +57,17 @@ function QuoteForm({ initial, onSave, onCancel }) {
 }
 
 /** 책에 딸린 인용구(좋았던 문장) 목록. 감상문과 별개로 문장 단위로 쌓아 둡니다. */
-export default function QuoteList({ readOnly = false, book, quotes, saveQuote, removeQuote }) {
+export default function QuoteList({
+  readOnly = false,
+  book,
+  quotes,
+  saveQuote,
+  removeQuote,
+  addRequest, // 서재 창 도구 모음/메뉴의 "인용구 추가" 요청 번호
+}) {
   const [editing, setEditing] = useState(null) // null | 'new' | quote object
+  const sectionRef = useAddRequest(addRequest, () => setEditing('new'))
+  const contextMenu = useContextMenu()
 
   const handleSave = (form) => {
     saveQuote({ ...form, id: editing === 'new' ? undefined : editing.id, bookId: book.id })
@@ -72,14 +84,9 @@ export default function QuoteList({ readOnly = false, book, quotes, saveQuote, r
   if (readOnly && quotes.length === 0) return null
 
   return (
-    <div className="book-detail__section">
+    <div className="book-detail__section" ref={sectionRef}>
       <div className="book-detail__section-header">
         <h3>인용구 ({quotes.length})</h3>
-        {!readOnly && (
-          <button type="button" onClick={() => setEditing('new')} disabled={editing !== null}>
-            + 인용구 추가
-          </button>
-        )}
       </div>
 
       {editing === 'new' && (
@@ -91,7 +98,9 @@ export default function QuoteList({ readOnly = false, book, quotes, saveQuote, r
       )}
 
       {quotes.length === 0 && editing === null && (
-        <p className="book-detail__empty">아직 저장한 인용구가 없습니다.</p>
+        <p className="book-detail__empty">
+          아직 저장한 인용구가 없습니다.{!readOnly && ' 도구 모음의 "인용구"로 좋았던 문장을 남겨 보세요.'}
+        </p>
       )}
 
       <ul className="quote-list">
@@ -105,25 +114,37 @@ export default function QuoteList({ readOnly = false, book, quotes, saveQuote, r
               />
             </li>
           ) : (
-            <li key={quote.id} className="quote-list__item">
-              <blockquote>{quote.content}</blockquote>
-              <div className="quote-list__meta">
-                {quote.page != null && <span>p.{quote.page}</span>}
-                {!readOnly && (
-                  <span className="quote-list__actions">
-                    <button type="button" onClick={() => setEditing(quote)}>
-                      수정
-                    </button>
-                    <button type="button" className="danger" onClick={() => handleDelete(quote)}>
-                      삭제
-                    </button>
-                  </span>
-                )}
+            <li
+              key={quote.id}
+              className="quote-list__item"
+              onContextMenu={
+                readOnly
+                  ? undefined
+                  : (e) =>
+                      contextMenu.open(e, [
+                        { label: '수정...', bold: true, onClick: () => setEditing(quote) },
+                        { separator: true },
+                        { label: '삭제', onClick: () => handleDelete(quote) },
+                      ])
+              }
+            >
+              <div className="quote-list__content">
+                <blockquote>{quote.content}</blockquote>
+                {quote.page != null && <div className="quote-list__meta">p.{quote.page}</div>}
               </div>
+              {!readOnly && (
+                <ItemActions
+                  actions={[
+                    { icon: 'pencil', label: '인용구 수정', onClick: () => setEditing(quote) },
+                    { icon: 'trash-lid', label: '인용구 삭제', onClick: () => handleDelete(quote), danger: true },
+                  ]}
+                />
+              )}
             </li>
           ),
         )}
       </ul>
+      {contextMenu.menu}
     </div>
   )
 }

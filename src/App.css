@@ -327,17 +327,59 @@
   margin-top: 8px;
 }
 
-@media (max-width: 720px) {
-  .app__main {
-    grid-template-columns: 1fr;
-  }
-}
-
 .app__detail {
   background: var(--win-face-light);
   border: 2px inset var(--win-face);
   padding: 16px;
   min-height: 300px;
+}
+
+/* ====== 서재 창: 창 크기에 맞춘 두 칸 ======
+   메뉴, 검색, 필터는 위에 고정하고 왼쪽 책 목록과 오른쪽 책 정보만 각자 스크롤합니다.
+   (모바일 서재도 .book-list를 쓰므로 데스크톱 서재 창 안으로만 한정합니다) */
+.library-window {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.library-window .app__main {
+  flex: 1;
+  min-height: 0;
+  grid-template-rows: minmax(0, 1fr);
+  align-items: stretch;
+}
+
+.library-window .book-list {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.library-window .book-list__sheet {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.library-window .book-list__items {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.library-window .app__detail {
+  min-height: 0;
+  overflow-y: auto;
+}
+
+/* 창이 좁으면(is-narrow) 목록과 책 정보를 위아래로 나누고, 둘 다 각자 스크롤합니다.
+   창이 그보다 더 낮으면 그때만 창 전체가 스크롤됩니다.
+   브라우저 폭이 아니라 창 폭 기준이라 LibraryWindow가 크기를 재서 클래스를 붙입니다. */
+.library-window.is-narrow .app__main {
+  grid-template-columns: 1fr;
+  grid-template-rows: minmax(320px, 1fr) minmax(220px, 1fr);
 }
 
 /* ====== 작업표시줄 알림 영역: 서재 저장 상태 아이콘 (시계 왼쪽) ====== */
@@ -432,16 +474,58 @@
   margin-bottom: 6px;
 }
 
-.book-list__filters {
+/* 읽기 상태 탭: 통계/검색 창과 같은 98식 탭을 목록 폭에 맞춰 4등분합니다 */
+.book-list__tabs {
+  position: relative;
+  z-index: 2;
   display: flex;
-  gap: 4px;
-  margin-bottom: 10px;
-  flex-wrap: wrap;
+  align-items: flex-end;
+  padding: 0 2px;
+  margin-bottom: -1px; /* 시트 위 테두리와 겹쳐 활성 탭이 시트와 이어집니다 */
 }
 
-.book-list__filters button.is-active {
-  border-style: inset;
+.book-list__tab {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  margin: 2px 0 0; /* 비활성 탭은 활성 탭보다 2px 낮습니다 */
+  padding: 3px 2px;
+  border: 1px solid;
+  border-bottom: none;
+  border-color: #ffffff #000000 transparent #ffffff;
+  background: var(--win-face);
+  box-shadow: inset -1px 0 0 #808080, inset 1px 1px 0 #dfdfdf;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.book-list__tab.is-active {
+  z-index: 3;
+  margin: 0 -2px; /* 활성 탭은 위로 2px, 양옆으로 2px 커져 앞으로 나온 것처럼 보입니다 */
+  padding: 4px 4px 5px;
   font-weight: bold;
+  border-bottom: 1px solid var(--win-face); /* 시트 위 테두리를 가려 시트와 한 몸이 됩니다 */
+}
+
+.book-list__tab:hover:not(.is-active) {
+  filter: none;
+}
+
+.book-list__tab:focus-visible {
+  outline: 1px dotted var(--win-text);
+  outline-offset: -4px;
+}
+
+/* 탭 아래의 시트: 목록 칸이 이 위에 놓입니다 */
+.book-list__sheet {
+  position: relative;
+  z-index: 1;
+  padding: 4px;
+  background: var(--win-face);
+  border: 1px solid;
+  border-color: #ffffff #000000 #000000 #ffffff;
+  box-shadow: inset -1px -1px 0 #808080, inset 1px 1px 0 #dfdfdf;
 }
 
 .book-list__items {
@@ -456,8 +540,16 @@
 }
 
 .book-list__items li {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
   padding: 6px 8px;
   cursor: pointer;
+}
+
+.book-list__text {
+  flex: 1;
+  min-width: 0;
 }
 
 .book-list__items li:hover {
@@ -1127,13 +1219,6 @@
   color: var(--win-text-muted);
 }
 
-.reading-list__actions,
-.quote-list__actions {
-  display: flex;
-  flex: none;
-  gap: 4px;
-}
-
 .reading-form {
   display: flex;
   flex-wrap: wrap;
@@ -1165,8 +1250,16 @@
 
 /* 인용구 */
 .quote-list__item {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
   padding: 6px 0;
   border-bottom: 1px solid var(--win-face-light);
+}
+
+.quote-list__content {
+  flex: 1;
+  min-width: 0;
 }
 
 .quote-list__item blockquote {
@@ -1177,10 +1270,7 @@
 }
 
 .quote-list__meta {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-top: 4px;
+  margin: 4px 0 0 13px; /* 인용 막대 오른쪽 글자 줄에 맞춥니다 */
   color: var(--win-text-muted);
 }
 
@@ -1240,6 +1330,27 @@
 .book-list__sort select {
   flex: 1;
   min-width: 0;
+}
+
+/* 정렬 방향 버튼: 드롭다운 오른쪽의 작은 98식 버튼 (▲ 오름차순, ▼ 내림차순) */
+.book-list__direction {
+  flex: none;
+  width: 22px;
+  align-self: stretch;
+  padding: 0;
+  font-size: 9px;
+  line-height: 1;
+}
+
+/* 지금 정렬 기준의 값 (별점, 완독일 등) */
+.book-list__sort-value {
+  margin-left: auto;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.book-list__items li:not(.is-selected) .book-list__sort-value {
+  color: var(--win-text);
 }
 
 .review-list {
@@ -2140,6 +2251,8 @@
 
 /* ====== 바탕화면 아이콘 오른쪽 클릭 메뉴 ====== */
 .context-menu {
+  user-select: none; /* 우클릭으로 선택된 글자가 메뉴까지 번져 보이지 않게 */
+  -webkit-user-select: none;
   position: fixed;
   z-index: 99999;
   min-width: 150px;
@@ -2847,4 +2960,167 @@ textarea:focus-visible {
 .tetris__quote figcaption {
   color: var(--win-text-muted);
   text-align: right;
+}
+
+/* ====== 도구 모음 (Windows 98 탐색기식) ======
+   메뉴 바 아래 홈 파인 선으로 나뉘고, 버튼은 평평했다가 마우스를 올리면 볼록, 누르면 오목해집니다. */
+.toolbar {
+  position: relative;
+  z-index: 4; /* 메뉴 드롭다운(5)보다 아래 */
+  display: flex;
+  flex-wrap: wrap;
+  align-items: stretch;
+  gap: 1px;
+  /* 메뉴 바처럼 창 본문 여백을 지우고 창 양끝까지, 메뉴 바 바로 아래에 붙입니다 */
+  margin: -6px -10px 6px;
+  padding: 2px 4px 2px 2px;
+  background: var(--win-face);
+  border-top: 1px solid var(--win-light); /* 메뉴 바 아래 홈 파인 선과 이어집니다 */
+  border-bottom: 1px solid var(--win-shadow);
+  box-shadow: 0 1px 0 var(--win-light);
+}
+
+/* 98 탐색기 도구 띠의 왼쪽 손잡이: 볼록한 세로 막대 */
+.toolbar::before {
+  content: '';
+  flex: none;
+  width: 3px;
+  margin: 2px 5px 2px 2px;
+  border-left: 1px solid var(--win-light);
+  border-right: 1px solid var(--win-shadow);
+}
+
+.toolbar__button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  min-width: 52px;
+  padding: 3px 5px 2px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--win-text);
+  font-size: 11px;
+  line-height: 1.2;
+  cursor: default;
+}
+
+.toolbar__button:hover:not(:disabled) {
+  border-color: var(--win-light) var(--win-shadow) var(--win-shadow) var(--win-light);
+  filter: none;
+}
+
+.toolbar__button:active:not(:disabled) {
+  border-style: solid;
+  border-color: var(--win-shadow) var(--win-light) var(--win-light) var(--win-shadow);
+  padding: 4px 4px 1px 6px; /* 눌리면 내용이 오른쪽 아래로 1px 밀립니다 */
+}
+
+.toolbar__button:focus-visible {
+  outline: 1px dotted var(--win-text);
+  outline-offset: -3px;
+}
+
+/* 비활성: 아이콘은 회색으로, 글자는 98식 엠보스 */
+.toolbar__button:disabled {
+  color: var(--win-shadow);
+  text-shadow: 1px 1px 0 var(--win-light);
+  cursor: default;
+}
+
+.toolbar__button:disabled .pixel-icon {
+  filter: grayscale(1) opacity(0.45);
+}
+
+.toolbar__label {
+  white-space: nowrap;
+}
+
+.toolbar__separator {
+  width: 0;
+  margin: 3px 3px;
+  border-left: 1px solid var(--win-shadow);
+  border-right: 1px solid var(--win-light);
+}
+
+/* 켜고 끄는 메뉴 항목(보기 > 도구 모음 등)의 체크 표시: 98식으로 글자 왼쪽 여백에 */
+.menubar__item {
+  position: relative;
+}
+
+.menubar__check {
+  position: absolute;
+  left: 6px;
+  font-weight: bold;
+}
+
+/* ====== 목록 항목의 아이콘 버튼 (인용구, 감상문, 회차) ======
+   도구 모음과 같은 98식 평평한 버튼: 평소엔 아이콘만, 마우스를 올리면 볼록, 누르면 오목 */
+.item-actions {
+  display: flex;
+  flex: none;
+  align-items: center;
+  margin-left: auto;
+}
+
+.item-actions__slot {
+  display: flex;
+  align-items: center;
+}
+
+.item-actions__button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 22px;
+  padding: 0;
+  border: 1px solid transparent;
+  background: transparent;
+  cursor: default;
+}
+
+.item-actions__button:hover {
+  border-color: var(--win-light) var(--win-shadow) var(--win-shadow) var(--win-light);
+  filter: none;
+}
+
+.item-actions__button:active {
+  border-style: solid;
+  border-color: var(--win-shadow) var(--win-light) var(--win-light) var(--win-shadow);
+  padding: 1px 0 0 1px;
+}
+
+.item-actions__button:focus-visible {
+  outline: 1px dotted var(--win-text);
+  outline-offset: -3px;
+}
+
+/* 삭제 앞의 작은 세로 홈: 수정과 헷갈려 잘못 누르지 않게 */
+.item-actions__separator {
+  width: 0;
+  height: 14px;
+  margin: 0 3px;
+  border-left: 1px solid var(--win-shadow);
+  border-right: 1px solid var(--win-light);
+}
+
+/* 감상문 카드는 더블클릭으로 엽니다 */
+.review-list__item {
+  cursor: default;
+}
+
+/* ====== 읽기 상태 아이콘 (목록: 아이콘만, 책 정보: 아이콘 + 이름) ====== */
+.status-icon {
+  display: flex;
+  flex: none;
+  margin-top: 0; /* 제목 첫 줄 높이에 맞춥니다 */
+}
+
+.status-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  vertical-align: middle;
 }
