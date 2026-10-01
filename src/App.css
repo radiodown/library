@@ -1421,8 +1421,6 @@
 .review-edit-window { display: flex; flex-direction: column; gap: 8px; height: 100%; min-height: 520px; }
 .review-editor__writing { display: flex; flex-direction: column; flex: 1; min-height: 0; gap: 8px; }
 .review-editor__recovery { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding: 8px; background: #ffffdc; border: 1px solid var(--win-shadow); }
-.review-editor__title { display: flex; align-items: center; gap: 10px; font-weight: bold; }
-.review-editor__title input { flex: 1; min-width: 0; padding: 7px; font-size: 14px; }
 .review-editor__tools { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
 .review-editor__tools label { display: flex; align-items: center; gap: 5px; white-space: nowrap; }
 .review-editor__tools select { width: auto; }
@@ -1457,7 +1455,6 @@
   .review-editor__workspace.has-quotes { flex-direction: column; }
   .review-editor__quotes { width: auto; max-height: 160px; }
   .review-picker__columns { grid-template-columns: 1fr; }
-  .review-editor__title { align-items: stretch; flex-direction: column; gap: 4px; }
 }
 
 .review-editor__format-tabs {
@@ -3257,4 +3254,201 @@ textarea:focus-visible {
 .star-input__clear {
   padding: 1px 8px;
   font-size: 11px;
+}
+
+/* 켜진 토글 버튼 (98식): 오목하게 눌린 채, 바탕에 촘촘한 체크 무늬 */
+.toolbar__button.is-pressed,
+.toolbar__button.is-pressed:hover:not(:disabled) {
+  border-color: var(--win-shadow) var(--win-light) var(--win-light) var(--win-shadow);
+  background-color: var(--win-face);
+  background-image: repeating-conic-gradient(var(--win-light) 0 25%, transparent 0 50%);
+  background-size: 2px 2px;
+  padding: 4px 4px 1px 6px;
+}
+
+/* ====== 감상문 편집 창: Windows 98 워드패드식 ======
+   메뉴 바 → 도구 모음 → 책 정보 띠 → 제목 → 서식 도구 + 본문 → 저장/닫기 → 상태 표시줄 */
+.review-edit-window {
+  gap: 0;
+}
+
+.review-editor {
+  flex: 1;
+  min-height: 0;
+  padding: 0;
+  gap: 8px;
+  border: none;
+  background: transparent;
+}
+
+/* 메뉴 바와 도구 모음을 빈틈없이 붙입니다 (편집기 안의 칸 간격 8px를 상쇄) */
+.review-editor .menubar {
+  margin-bottom: 0;
+}
+
+.review-editor > .toolbar {
+  margin-top: -8px;
+}
+
+/* 책 정보 띠: 작은 표지 + 제목·저자 + 상태·별점·기간 */
+.review-band {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 8px;
+  background: var(--win-light);
+  border: 2px groove var(--win-face);
+}
+
+.review-band__cover {
+  flex: none;
+  width: 30px;
+  height: 42px;
+  object-fit: cover;
+  border: 1px solid var(--win-shadow);
+}
+
+.review-band__cover--empty {
+  background: repeating-linear-gradient(45deg, var(--win-face-light) 0 3px, var(--win-light) 3px 6px);
+}
+
+.review-band__info {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.review-band__title {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  min-width: 0;
+}
+
+.review-band__title strong {
+  font-size: 14px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.review-band__author,
+.review-band__meta {
+  color: var(--win-text-muted);
+  font-size: 11px;
+}
+
+.review-band__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.review-band__meta .book-detail__rating {
+  margin-left: 0;
+}
+
+/* 서식 도구줄: 편집기 라이브러리의 요즘식 도구줄을 98 도구 모음처럼 다시 칠합니다 */
+.review-editor .toastui-editor-defaultUI-toolbar {
+  height: auto;
+  padding: 2px 4px;
+  background: var(--win-face);
+  border-bottom: 1px solid var(--win-shadow);
+  border-radius: 0;
+  box-shadow: 0 1px 0 var(--win-light);
+}
+
+.review-editor .toastui-editor-toolbar {
+  height: auto;
+}
+
+.review-editor .toastui-editor-defaultUI-toolbar button {
+  width: 26px;
+  height: 24px;
+  margin: 1px;
+  border: 1px solid transparent;
+  border-radius: 0;
+  background-color: transparent;
+}
+
+.review-editor .toastui-editor-defaultUI-toolbar button:not(:disabled):hover {
+  border-color: var(--win-light) var(--win-shadow) var(--win-shadow) var(--win-light);
+  background-color: transparent;
+}
+
+.review-editor .toastui-editor-defaultUI-toolbar button:not(:disabled):active,
+.review-editor .toastui-editor-toolbar-icons:not(:disabled).active {
+  border-color: var(--win-shadow) var(--win-light) var(--win-light) var(--win-shadow);
+  background-color: var(--win-face-light);
+}
+
+.review-editor .toastui-editor-toolbar-divider {
+  height: 18px;
+  margin: 4px 4px;
+  background-color: var(--win-shadow);
+  box-shadow: 1px 0 0 var(--win-light);
+}
+
+/* 저장/닫기: 98 대화상자처럼 오른쪽 아래 */
+.review-editor .review-editor__actions {
+  justify-content: flex-end;
+  margin: 0;
+}
+
+.review-editor__actions button {
+  min-width: 75px;
+}
+
+/* 상태 표시줄: 창 맨 아래에 붙은 음푹한 칸들 */
+.review-editor .review-editor__status {
+  flex-wrap: nowrap;
+  justify-content: flex-start;
+  gap: 2px;
+  margin: 0 -10px -10px;
+  padding: 2px 16px 2px 2px; /* 오른쪽은 창 크기 조절 손잡이 자리 */
+  background: var(--win-face);
+  border-top: 1px solid var(--win-light);
+  color: var(--win-text);
+}
+
+.review-editor__pane {
+  flex: none;
+  padding: 1px 6px;
+  border: 1px solid;
+  border-color: var(--win-shadow) var(--win-light) var(--win-light) var(--win-shadow);
+  white-space: nowrap;
+}
+
+.review-editor__pane--wide {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* 감상문 쓸 책 고르기: 상태 아이콘 + 제목/저자 */
+.review-picker__books button {
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.review-picker__icon {
+  flex: none;
+  padding-top: 1px;
+}
+
+.review-picker__text {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+}
+
+/* 마크다운 방식의 "Write/Preview" 탭은 숨깁니다. 미리보기는 도구 모음의 "미리보기" 버튼이 맡습니다.
+   라이브러리가 요소에 직접 display를 써 넣어서 !important로만 이길 수 있습니다. */
+.review-editor .toastui-editor-md-tab-container {
+  display: none !important;
 }
