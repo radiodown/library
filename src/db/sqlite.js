@@ -69,7 +69,55 @@ CREATE TABLE IF NOT EXISTS quotes (
   created_at TEXT NOT NULL,
   updated_at TEXT NOT NULL
 );
+
+-- 소설 집필. 서재의 책과는 연결되지 않는 별도의 작품들입니다.
+-- 장/인물/자료는 창에서 만든 순간부터 같은 id를 쓰도록 문자열(UUID) id를 씁니다.
+CREATE TABLE IF NOT EXISTS novels (
+  id TEXT PRIMARY KEY,
+  title TEXT NOT NULL,
+  logline TEXT NOT NULL DEFAULT '',
+  daily_goal INTEGER NOT NULL DEFAULT 2000,
+  char_count INTEGER NOT NULL DEFAULT 0, -- 공백 제외 글자 수(작품 목록용)
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS novel_chapters (
+  id TEXT PRIMARY KEY,
+  novel_id TEXT NOT NULL REFERENCES novels(id) ON DELETE CASCADE,
+  position INTEGER NOT NULL,
+  title TEXT NOT NULL DEFAULT '',
+  synopsis TEXT NOT NULL DEFAULT '',
+  content TEXT NOT NULL DEFAULT ''
+);
+
+CREATE TABLE IF NOT EXISTS novel_characters (
+  id TEXT PRIMARY KEY,
+  novel_id TEXT NOT NULL REFERENCES novels(id) ON DELETE CASCADE,
+  position INTEGER NOT NULL,
+  name TEXT NOT NULL DEFAULT '',
+  role TEXT NOT NULL DEFAULT '',
+  memo TEXT NOT NULL DEFAULT ''
+);
+
+CREATE TABLE IF NOT EXISTS novel_notes (
+  id TEXT PRIMARY KEY,
+  novel_id TEXT NOT NULL REFERENCES novels(id) ON DELETE CASCADE,
+  position INTEGER NOT NULL,
+  title TEXT NOT NULL DEFAULT '',
+  content TEXT NOT NULL DEFAULT ''
+);
+
+-- 날짜별로 그날 처음 쓰기 시작할 때의 글자 수. 오늘 쓴 분량 = 지금 글자 수 - start_chars
+CREATE TABLE IF NOT EXISTS novel_progress (
+  novel_id TEXT NOT NULL REFERENCES novels(id) ON DELETE CASCADE,
+  day TEXT NOT NULL,
+  start_chars INTEGER NOT NULL,
+  PRIMARY KEY (novel_id, day)
+);
 `
+
+const NOVEL_CHILD_TABLES = ['novel_chapters', 'novel_characters', 'novel_notes', 'novel_progress']
 
 const CHILD_TABLES = ['reviews', 'next_books', 'readings', 'quotes']
 
@@ -482,4 +530,84 @@ export function upsertQuote(db, quote) {
 
 export function deleteQuote(db, id) {
   db.run('DELETE FROM quotes WHERE id = ?', [id])
+}
+
+// ---- 소설 집필 ----
+
+/** 작품 목록. 최근에 고친 작품이 먼저 옵니다. */
+export function getNovels(db) {
+  return queryAll(db, 'SELECT id, title, char_count, updated_at FROM novels ORDER BY updated_at DESC').map((row) => ({
+    id: row.id,
+    title: row.title,
+    chars: row.char_count,
+    updatedAt: row.updated_at,
+  }))
+}
+
+/** 작품 하나를 장/인물/자료/진행 기록까지 모두 읽습니다. */
+export function getNovel(db, id) {
+  const [row] = queryAll(db, 'SELECT * FROM novels WHERE id = ?', [id])
+  if (!row) return null
+  const children = (table) => queryAll(db, `SELECT * FROM ${table} WHERE novel_id = ? ORDER BY position`, [id])
+  const progress = {}
+  queryAll(db, 'SELECT day, start_chars FROM novel_progress WHERE novel_id = ?', [id]).forEach((r) => {
+    progress[r.day] = { start: r.start_chars }
+  })
+  return {
+    id: row.id,
+    title: row.title,
+    logline: row.logline,
+    dailyGoal: row.daily_goal,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+    progress,
+    chapters: children('novel_chapters').map((r) => ({ id: r.id, title: r.title, synopsis: r.synopsis, text: r.content })),
+    characters: children('novel_characters').map((r) => ({ id: r.id, name: r.name, role: r.role, memo: r.memo })),
+    notes: children('novel_notes').map((r) => ({ id: r.id, title: r.title, text: r.content })),
+  }
+}
+
+/**
+ * 작품 전체를 저장합니다. 장/인물/자료는 순서까지 그대로 다시 씁니다.
+ * charCount: 공백 제외 글자 수(작품 목록에 보여 줌)
+ */
+export function saveNovel(db, novel, charCount) {
+  const now = new Date().toISOString()
+  db.run('BEGIN')
+  try {
+    db.run(
+      `INSERT INTO novels (id, title, logline, daily_goal, char_count, created_at, updated_at) VALUES (?,?,?,?,?,?,?)
+       ON CONFLICT(id) DO UPDATE SET title=excluded.title, logline=excluded.logline, daily_goal=excluded.daily_goal,
+         char_count=excluded.char_count, updated_at=excluded.updated_at`,
+      [novel.id, novel.title, novel.logline || '', novel.dailyGoal ?? 0, charCount, novel.createdAt || now, now],
+    )
+    NOVEL_CHILD_TABLES.forEach((table) => db.run(`DELETE FROM ${table} WHERE novel_id = ?`, [novel.id]))
+    novel.chapters.forEach((c, i) =>
+      db.run('INSERT INTO novel_chapters (id, novel_id, position, title, synopsis, content) VALUES (?,?,?,?,?,?)', [
+        c.id, novel.id, i, c.title, c.synopsis || '', c.text,
+      ]),
+    )
+    novel.characters.forEach((c, i) =>
+      db.run('INSERT INTO novel_characters (id, novel_id, position, name, role, memo) VALUES (?,?,?,?,?,?)', [
+        c.id, novel.id, i, c.name, c.role || '', c.memo || '',
+      ]),
+    )
+    novel.notes.forEach((n, i) =>
+      db.run('INSERT INTO novel_notes (id, novel_id, position, title, content) VALUES (?,?,?,?,?)', [
+        n.id, novel.id, i, n.title, n.text,
+      ]),
+    )
+    Object.entries(novel.progress || {}).forEach(([day, p]) =>
+      db.run('INSERT INTO novel_progress (novel_id, day, start_chars) VALUES (?,?,?)', [novel.id, day, p.start]),
+    )
+    db.run('COMMIT')
+  } catch (err) {
+    db.run('ROLLBACK')
+    throw err
+  }
+}
+
+export function deleteNovel(db, id) {
+  NOVEL_CHILD_TABLES.forEach((table) => db.run(`DELETE FROM ${table} WHERE novel_id = ?`, [id]))
+  db.run('DELETE FROM novels WHERE id = ?', [id])
 }

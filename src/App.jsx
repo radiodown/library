@@ -24,6 +24,7 @@ import TrashWindow from './components/TrashWindow'
 import PowerScreen from './components/PowerScreen'
 import ShutdownDialog from './components/ShutdownDialog'
 import TetrisWindow from './components/TetrisWindow'
+import NovelWindow from './components/NovelWindow'
 import SaveStatusTray from './components/SaveStatusTray'
 import { readReviewDraft } from './utils/reviewDrafts'
 import './App.css'
@@ -199,6 +200,15 @@ export default function App() {
       initialSize: { width: 400, height: 500 },
     })
 
+  // 소설 집필 프로그램. 서재의 책과는 연결되지 않지만 작품은 서재 파일에 함께 저장됩니다. (모바일은 읽기 전용이라 두지 않음)
+  const openNovelWindow = () =>
+    openWindow('novel', {
+      title: '소설 집필',
+      icon: 'fountain-pen',
+      initialPosition: { x: 90, y: 40 },
+      initialSize: { width: 980, height: 640 },
+    })
+
   const openNextBooksWindow = () =>
     openWindow('next-books', {
       title: '다음 책',
@@ -329,6 +339,7 @@ export default function App() {
     { icon: 'bookmark', label: '다음 책', onClick: openNextBooksWindow },
     { icon: 'chart', label: '독서 통계', onClick: openStatsWindow },
     { icon: 'quote', label: '오늘의 인용구', onClick: openQuoteOfDayWindow },
+    { icon: 'fountain-pen', label: '소설 집필', onClick: openNovelWindow },
     { separator: true },
     { icon: 'document-new', label: '새 서재 만들기', onClick: libraryDb.newLibrary },
     { icon: 'folder-open', label: '서재 불러오기', onClick: openLibrary },
@@ -445,6 +456,35 @@ export default function App() {
           addOrUpdateBook={libraryDb.addOrUpdateBook}
           onOpenReview={openReviewEditWindow}
           onOpenLibrary={openLibraryWindow}
+        />
+      )
+    }
+    if (w.id === 'novel') {
+      if (!isReady) {
+        return (
+          <div className="trash trash--empty">
+            <p>작품은 서재 파일 안에 저장됩니다. 먼저 서재를 열거나 새로 만들어 주세요.</p>
+            <span className="novel-home__actions">
+              <button type="button" onClick={openLibrary}>서재 불러오기</button>
+              <button type="button" onClick={libraryDb.newLibrary}>새 서재 만들기</button>
+            </span>
+          </div>
+        )
+      }
+      return (
+        <NovelWindow
+          key={libraryDb.librarySession}
+          libraryId={libraryDb.libraryId}
+          novels={libraryDb.novels}
+          loadNovel={libraryDb.loadNovel}
+          saveNovel={libraryDb.saveNovel}
+          removeNovel={libraryDb.removeNovel}
+          onSaveLibrary={() => saveLibrary(false)}
+          onClose={() => closeWindow(w.id)}
+          registerEditor={(editor) => {
+            editorsRef.current.set(w.id, editor)
+            return () => editorsRef.current.delete(w.id)
+          }}
         />
       )
     }
@@ -635,9 +675,8 @@ export default function App() {
           </>
         ) : (
           // PC 화면 모드(터치 기기)에서는 두 번 탭이 확대로 먹히므로 한 번 탭으로 실행합니다.
+          // 서재 저장/불러오기는 시작 메뉴와 서재 창의 파일 메뉴에 있습니다. 휴지통은 맨 아래에 둡니다.
           <>
-            <DesktopIcon icon="floppy" label="서재 저장" onActivate={handleSaveIcon} tapToOpen={desktopMode} />
-            <DesktopIcon icon="folder-open" label="서재 불러오기" onActivate={openLibrary} tapToOpen={desktopMode} />
             <DesktopIcon
               icon="library"
               label="서재"
@@ -650,13 +689,14 @@ export default function App() {
               ]}
             />
             <DesktopIcon icon="notepad" label="감상문" onActivate={openReviewWindow} tapToOpen={desktopMode} />
+            <DesktopIcon icon="fountain-pen" label="소설 집필" onActivate={openNovelWindow} tapToOpen={desktopMode} />
+            <DesktopIcon icon="blocks" label="테트리스" onActivate={openTetrisWindow} tapToOpen={desktopMode} />
             <DesktopIcon
               icon={libraryDb.trashedBooks.length ? 'trash-full' : 'trash'}
               label={libraryDb.trashedBooks.length ? `휴지통 (${libraryDb.trashedBooks.length})` : '휴지통'}
               onActivate={openTrashWindow}
               tapToOpen={desktopMode}
             />
-            <DesktopIcon icon="blocks" label="테트리스" onActivate={openTetrisWindow} tapToOpen={desktopMode} />
           </>
         )}
       </div>

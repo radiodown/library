@@ -19,9 +19,15 @@ async function legacyLibrary() {
   return bytes
 }
 
+// 서재 저장/불러오기는 바탕화면 아이콘 없이 시작 메뉴에서 합니다.
+async function startMenu(page, label) {
+  await page.locator('.taskbar button').first().click()
+  await page.getByRole('menuitem', { name: label, exact: true }).click()
+}
+
 async function loadFile(page, bytes) {
   const choosing = page.waitForEvent('filechooser')
-  await page.locator('.desktop-icon').filter({ hasText: '서재 불러오기' }).dblclick()
+  await startMenu(page, '서재 불러오기')
   await (await choosing).setFiles({ name: 'legacy.db', mimeType: 'application/octet-stream', buffer: bytes })
 }
 
@@ -150,7 +156,7 @@ test('legacy DB, page reload draft recovery and no duplicate review', async ({ p
   await expect(editor.getByLabel('감상문 본문')).toHaveValue('새로고침 후 되살아날 문장')
   await saveAndClose(editor)
   const downloading = page.waitForEvent('download')
-  await page.locator('.desktop-icon').filter({ hasText: /^서재 저장$/ }).dblclick()
+  await startMenu(page, '서재 저장')
   const download = await downloading
   const savedBytes = await readFile(await download.path())
   const SQL = await initSqlJs()
