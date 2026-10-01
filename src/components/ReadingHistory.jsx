@@ -80,7 +80,7 @@ function ReadingForm({ initial, onSave, onCancel }) {
   )
 }
 
-function ReadingRow({ label, reading, note, onEdit, onDelete }) {
+function ReadingRow({ label, reading, onEdit, onDelete }) {
   return (
     <li className="reading-list__item">
       <span className="reading-list__no">{label}</span>
@@ -90,7 +90,6 @@ function ReadingRow({ label, reading, note, onEdit, onDelete }) {
           {reading.rating ? <span className="book-detail__rating"> {'★'.repeat(reading.rating)}</span> : null}
         </span>
         {reading.memo && <span className="reading-list__memo">{reading.memo}</span>}
-        {note && <span className="reading-list__memo">{note}</span>}
       </span>
       {onEdit && (
         <ItemActions
@@ -151,7 +150,6 @@ export default function ReadingHistory({
           <ReadingRow
             label="1회차"
             reading={book}
-            note={readOnly ? undefined : '책 정보 수정에서 바꿀 수 있습니다'}
           />
         )}
         {readings.map((reading, i) =>
