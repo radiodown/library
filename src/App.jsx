@@ -23,6 +23,8 @@ import DriveStatusToast from './components/DriveStatusToast'
 import TrashWindow from './components/TrashWindow'
 import PowerScreen from './components/PowerScreen'
 import ShutdownDialog from './components/ShutdownDialog'
+import TetrisWindow from './components/TetrisWindow'
+import SaveStatusTray from './components/SaveStatusTray'
 import './App.css'
 import './mobile.css' // App.css 뒤에 불러와야 모바일 덮어쓰기가 우선합니다
 
@@ -167,6 +169,15 @@ export default function App() {
       icon: 'notepad',
       initialPosition: { x: 160, y: 120 },
       initialSize: { width: 640, height: 520 },
+    })
+
+  // 바탕화면 전용 게임. 시작 메뉴와 모바일에는 두지 않습니다.
+  const openTetrisWindow = () =>
+    openWindow('tetris', {
+      title: '테트리스',
+      icon: 'blocks',
+      initialPosition: { x: 220, y: 60 },
+      initialSize: { width: 400, height: 500 },
     })
 
   const openNextBooksWindow = () =>
@@ -402,6 +413,15 @@ export default function App() {
         />
       )
     }
+    if (w.id === 'tetris') {
+      return (
+        <TetrisWindow
+          active={w.id === activeId}
+          quotes={libraryDb.quotes}
+          books={libraryDb.books}
+        />
+      )
+    }
     if (w.id === 'shutdown') {
       return (
         <ShutdownDialog
@@ -585,6 +605,7 @@ export default function App() {
               label={libraryDb.trashedBooks.length ? `휴지통 (${libraryDb.trashedBooks.length})` : '휴지통'}
               onActivate={openTrashWindow}
             />
+            <DesktopIcon icon="blocks" label="테트리스" onActivate={openTetrisWindow} />
           </>
         )}
       </div>
@@ -611,6 +632,21 @@ export default function App() {
 
       <Taskbar windows={windows} activeId={activeId} onToggle={handleToggleFromTaskbar} menuItems={isMobile ? mobileMenuItems : startMenuItems}
         onClockEasterEgg={openCreditsWindow}
+        tray={
+          // 모바일은 읽기 전용이라 저장 상태를 보여 주지 않습니다.
+          !isMobile && (
+            <SaveStatusTray
+              isReady={isReady}
+              isDirty={isDirty}
+              busy={libraryDb.busy}
+              lastSaved={libraryDb.lastSaved}
+              canAutoSave={libraryDb.canAutoSave}
+              fsaSupported={libraryDb.fsaSupported}
+              driveSupported={libraryDb.driveSupported}
+              onSave={() => saveLibrary(false)}
+            />
+          )
+        }
       />
     </div>
 

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import SaveStatusBar from './SaveStatusBar'
+import AutoSaveNotice from './AutoSaveNotice'
 import BookList from './BookList'
 import BookDetail from './BookDetail'
 import BookForm from './BookForm'
@@ -10,12 +10,8 @@ import { useDialog } from './dialogContext'
 /** "서재" 창의 내용: DB 파일 관리 툴바 + 책 목록/상세/감상문. */
 export default function LibraryWindow({
   isReady,
-  isDirty,
   busy,
   error,
-  lastSaved,
-  canAutoSave,
-  driveSupported,
   books,
   fsaSupported,
   openLibrary,
@@ -192,14 +188,7 @@ export default function LibraryWindow({
         </main>
       )}
 
-      <SaveStatusBar
-        isReady={isReady}
-        isDirty={isDirty}
-        lastSaved={lastSaved}
-        canAutoSave={canAutoSave}
-        driveSupported={driveSupported}
-        fsaSupported={fsaSupported}
-      />
+      <AutoSaveNotice fsaSupported={fsaSupported} />
     </div>
   )
 }

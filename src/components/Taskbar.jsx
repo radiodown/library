@@ -16,8 +16,9 @@ function StartLogo() {
 /**
  * 하단 작업 표시줄. 시작 메뉴, 열려 있는 창 목록, 시계를 보여줍니다.
  * menuItems: { icon, label, onClick } 또는 { separator: true } 배열
+ * tray: 시계 왼쪽 알림 영역에 넣을 내용 (서재 저장 상태 등)
  */
-export default function Taskbar({ windows, activeId, onToggle, menuItems = [], onClockEasterEgg }) {
+export default function Taskbar({ windows, activeId, onToggle, menuItems = [], onClockEasterEgg, tray }) {
   const [now, setNow] = useState(new Date())
   const [menuOpen, setMenuOpen] = useState(false)
   const startRef = useRef(null)
@@ -108,6 +109,8 @@ export default function Taskbar({ windows, activeId, onToggle, menuItems = [], o
           </button>
         ))}
       </div>
+
+      {tray}
 
       <div
         className="taskbar__clock"

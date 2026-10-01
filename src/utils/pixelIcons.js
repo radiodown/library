@@ -361,4 +361,23 @@ export const ICONS = {
     '...kkkkkkkkkk...',
     '................',
   ],
+  // 떨어지는 T 블록과 쌓인 J/O 블록 (테트리스)
+  blocks: [
+    '....wwwkwwwkwwwk',
+    '....wmmkwmmkwmmk',
+    '....wmmkwmmkwmmk',
+    '....kkkkkkkkkkkk',
+    '........wwwk....',
+    '........wmmk....',
+    '........wmmk....',
+    '........kkkk....',
+    'wwwk....wwwkwwwk',
+    'wbbk....wyykwyyk',
+    'wbbk....wyykwyyk',
+    'kkkk....kkkkkkkk',
+    'wwwkwwwkwwwkwwwk',
+    'wbbkwbbkwyykwyyk',
+    'wbbkwbbkwyykwyyk',
+    'kkkkkkkkkkkkkkkk',
+  ],
 }
