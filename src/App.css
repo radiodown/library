@@ -340,30 +340,61 @@
   min-height: 300px;
 }
 
-/* ====== 작업표시줄 알림 영역: 서재 저장 상태 (시계 왼쪽) ====== */
-.taskbar__status {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 2px 6px;
-  border: 1px inset var(--win-face);
-  background: var(--win-face);
-  font-size: 11px;
-  white-space: nowrap;
+/* ====== 작업표시줄 알림 영역: 서재 저장 상태 아이콘 (시계 왼쪽) ====== */
+.tray-status {
+  position: relative;
+  display: flex;
 }
 
-.taskbar__status[aria-disabled='true'] {
+/* 알림 영역 칸: 시계처럼 음푹 들어간 회색 칸 안에 아이콘 하나 */
+.tray-status__button {
+  position: relative;
+  display: flex;
+  align-items: center;
+  padding: 3px 5px;
+  border: 1px inset var(--win-face);
+  background: var(--win-face);
+}
+
+.tray-status__button:active:not([aria-disabled='true']) {
+  border-style: inset;
+}
+
+.tray-status__button[aria-disabled='true'] {
   cursor: default;
 }
 
-.taskbar__status-saved {
-  color: var(--win-text-muted);
+/* 플로피 오른쪽 아래에 얹힌 상태 점: 초록은 저장됨, 빨강은 저장 안 됨 */
+.tray-status__dot {
+  position: absolute;
+  right: 2px;
+  bottom: 2px;
+  width: 7px;
+  height: 7px;
+  border: 1px solid #000000;
+  border-radius: 50%;
+  background: #00ff00;
 }
 
-.taskbar__status-dirty {
-  color: var(--win-danger);
-  font-weight: bold;
+.tray-status__dot.is-dirty {
+  background: #ff0000;
   animation: blink 1s steps(2, start) infinite;
+}
+
+/* Windows 98 툴팁: 옅은 노란 바탕, 검은 1px 테두리, 각진 모서리 */
+.tray-status__tip {
+  position: absolute;
+  right: 0;
+  bottom: calc(100% + 6px);
+  padding: 2px 5px;
+  background: #ffffe1;
+  color: #000000;
+  border: 1px solid #000000;
+  font-size: 11px;
+  line-height: 1.5;
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 1;
 }
 
 @keyframes blink {
