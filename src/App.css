@@ -2959,6 +2959,23 @@ textarea:focus-visible {
   grid-auto-rows: 14px;
 }
 
+/* 이번 블록에서 이미 보관을 써서 다시 바꿀 수 없을 때 */
+.tetris__preview-grid.is-dimmed {
+  opacity: 0.35;
+}
+
+.tetris__boxes {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(72px, 1fr));
+  gap: 6px;
+}
+
+.tetris__level {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
 .tetris__stats {
   display: grid;
   grid-template-columns: auto 1fr;

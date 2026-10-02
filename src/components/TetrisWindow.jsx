@@ -1,11 +1,16 @@
 import { useEffect, useMemo, useReducer, useState } from 'react'
 import {
   COLS,
+  LOCK_DELAY_MS,
+  MAX_START_LEVEL,
   ROWS,
   createGame,
   ghostPiece,
   hardDrop,
+  hold,
+  isGrounded,
   levelSpeed,
+  lock,
   move,
   rotate,
   shapeOf,
@@ -13,6 +18,16 @@ import {
 } from '../utils/tetris'
 
 const BEST_KEY = 'library98-tetris-best'
+const LEVEL_KEY = 'library98-tetris-level'
+
+function readStartLevel() {
+  try {
+    const level = Number(localStorage.getItem(LEVEL_KEY))
+    return level >= 1 && level <= MAX_START_LEVEL ? level : 1
+  } catch {
+    return 1
+  }
+}
 
 function readBest() {
   try {
@@ -35,7 +50,7 @@ function reducer(state, action) {
   const { phase, game } = state
   switch (action.type) {
     case 'start':
-      return { phase: 'playing', game: createGame() }
+      return { phase: 'playing', game: createGame(action.level) }
     case 'pause':
       return phase === 'playing' ? { ...state, phase: 'paused' } : state
     case 'resume':
@@ -52,6 +67,8 @@ function reducer(state, action) {
   else if (action.type === 'soft') next = stepDown(game, true)
   else if (action.type === 'tick') next = stepDown(game)
   else if (action.type === 'drop') next = hardDrop(game)
+  else if (action.type === 'hold') next = hold(game)
+  else if (action.type === 'lock') next = lock(game)
   if (next === game) return state
   return { phase: next.over ? 'over' : 'playing', game: next }
 }
@@ -65,6 +82,9 @@ const PLAY_KEYS = {
   KeyX: { type: 'rotate', dir: 1 },
   KeyZ: { type: 'rotate', dir: -1 },
   Space: { type: 'drop', once: true },
+  KeyC: { type: 'hold', once: true },
+  ShiftLeft: { type: 'hold', once: true },
+  ShiftRight: { type: 'hold', once: true },
   KeyP: { type: 'pause', once: true },
   Escape: { type: 'pause', once: true },
 }
@@ -76,8 +96,8 @@ function isTypingTarget(el) {
   )
 }
 
-/** "다음 블록" 미리보기. 빈 줄과 빈 칸을 잘라내서 상자 가운데에 오게 합니다. */
-function PiecePreview({ type }) {
+/** "다음/보관 블록" 미리보기. 빈 줄과 빈 칸을 잘라내서 상자 가운데에 오게 합니다. */
+function PiecePreview({ type, dimmed = false }) {
   const matrix = shapeOf(type)
   const usedCols = matrix[0].map((_, x) => matrix.some((row) => row[x]))
   const trimmed = matrix
@@ -85,7 +105,7 @@ function PiecePreview({ type }) {
     .map((row) => row.filter((_, x) => usedCols[x]))
   return (
     <div
-      className="tetris__preview-grid"
+      className={`tetris__preview-grid${dimmed ? ' is-dimmed' : ''}`}
       style={{ gridTemplateColumns: `repeat(${trimmed[0].length}, 14px)` }}
     >
       {trimmed.flatMap((row, y) =>
@@ -111,6 +131,8 @@ export default function TetrisWindow({ active, quotes = [], books = [] }) {
     game: createGame(),
   }))
   const [best, setBest] = useState(readBest)
+  const [startLevel, setStartLevel] = useState(readStartLevel)
+  const start = () => dispatch({ type: 'start', level: startLevel })
 
   // 창이 뒤로 가거나 최소화되면 일시정지합니다. (렌더 중에 이전 값과 비교하는 React 권장 방식)
   const [wasActive, setWasActive] = useState(active)
@@ -125,6 +147,22 @@ export default function TetrisWindow({ active, quotes = [], books = [] }) {
     const id = setInterval(() => dispatch({ type: 'tick' }), levelSpeed(game.level))
     return () => clearInterval(id)
   }, [phase, game.level])
+
+  // 바닥에 닿아도 바로 굳지 않고 잠깐 기다립니다. 그사이 옮기거나 돌리면(lockKey가 바뀌면) 다시 기다립니다.
+  const grounded = phase === 'playing' && isGrounded(game)
+  useEffect(() => {
+    if (!grounded) return undefined
+    const id = setTimeout(() => dispatch({ type: 'lock' }), LOCK_DELAY_MS)
+    return () => clearTimeout(id)
+  }, [grounded, game.lockKey])
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(LEVEL_KEY, String(startLevel))
+    } catch {
+      // 시작 레벨은 이번 창에서만 기억됩니다.
+    }
+  }, [startLevel])
 
   useEffect(() => {
     if (!active) return undefined
@@ -148,12 +186,12 @@ export default function TetrisWindow({ active, quotes = [], books = [] }) {
         (phase === 'over' && isGo && e.code !== 'Space')
       ) {
         e.preventDefault()
-        if (!e.repeat) dispatch({ type: 'start' })
+        if (!e.repeat) dispatch({ type: 'start', level: startLevel })
       }
     }
     window.addEventListener('keydown', handler)
     return () => window.removeEventListener('keydown', handler)
-  }, [active, phase])
+  }, [active, phase, startLevel])
 
   // 게임이 끝나면 최고 점수를 갱신하고, 바뀐 최고 점수는 브라우저에 남깁니다.
   if (phase === 'over' && game.score > best) setBest(game.score)
@@ -194,7 +232,8 @@ export default function TetrisWindow({ active, quotes = [], books = [] }) {
   // 버튼에 포커스가 남으면 스페이스바/Enter가 버튼을 다시 누르므로 바로 놓아 줍니다.
   const press = (type) => (e) => {
     e.currentTarget.blur()
-    dispatch({ type })
+    if (type === 'start') start()
+    else dispatch({ type })
   }
 
   return (
@@ -219,7 +258,7 @@ export default function TetrisWindow({ active, quotes = [], books = [] }) {
               <p>
                 <strong>TETRIS</strong>
                 <br />
-                Enter로 시작
+                레벨 {startLevel} · Enter로 시작
               </p>
             )}
             {phase === 'paused' && (
@@ -246,12 +285,20 @@ export default function TetrisWindow({ active, quotes = [], books = [] }) {
       </div>
 
       <div className="tetris__side">
-        <fieldset className="tetris__box">
-          <legend>다음</legend>
-          <div className="tetris__preview">
-            {phase !== 'ready' && <PiecePreview type={game.next} />}
-          </div>
-        </fieldset>
+        <div className="tetris__boxes">
+          <fieldset className="tetris__box">
+            <legend>보관 (C)</legend>
+            <div className="tetris__preview">
+              {phase !== 'ready' && game.hold && <PiecePreview type={game.hold} dimmed={!game.canHold} />}
+            </div>
+          </fieldset>
+          <fieldset className="tetris__box">
+            <legend>다음</legend>
+            <div className="tetris__preview">
+              {phase !== 'ready' && <PiecePreview type={game.next} />}
+            </div>
+          </fieldset>
+        </div>
 
         <dl className="tetris__stats">
           <dt>점수</dt>
@@ -259,7 +306,7 @@ export default function TetrisWindow({ active, quotes = [], books = [] }) {
           <dt>줄</dt>
           <dd>{game.lines}</dd>
           <dt>레벨</dt>
-          <dd>{game.level}</dd>
+          <dd>{phase === 'ready' ? startLevel : game.level}</dd>
           <dt>최고</dt>
           <dd>{best.toLocaleString()}</dd>
         </dl>
@@ -275,9 +322,27 @@ export default function TetrisWindow({ active, quotes = [], books = [] }) {
           </button>
         )}
         {(phase === 'ready' || phase === 'over') && (
-          <button type="button" onClick={press('start')}>
-            {phase === 'over' ? '다시 시작' : '시작'}
-          </button>
+          <>
+            <label className="tetris__level">
+              시작 레벨
+              <select
+                value={startLevel}
+                onChange={(e) => {
+                  setStartLevel(Number(e.target.value))
+                  e.target.blur() // 고른 뒤 Enter/방향키가 게임으로 가도록 포커스를 놓습니다
+                }}
+              >
+                {Array.from({ length: MAX_START_LEVEL }, (_, i) => i + 1).map((level) => (
+                  <option key={level} value={level}>
+                    {level} ({(levelSpeed(level) / 1000).toFixed(2)}초/칸)
+                  </option>
+                ))}
+              </select>
+            </label>
+            <button type="button" onClick={press('start')}>
+              {phase === 'over' ? '다시 시작' : '시작'}
+            </button>
+          </>
         )}
 
         {quote ? (
@@ -292,6 +357,8 @@ export default function TetrisWindow({ active, quotes = [], books = [] }) {
             <li>Z 반대 회전</li>
             <li>↓ 빨리 내리기</li>
             <li>Space 바로 낙하</li>
+            <li>C / Shift 보관</li>
+            <li>착지 후 0.5초 이동 가능</li>
             <li>P 일시정지</li>
           </ul>
         )}
