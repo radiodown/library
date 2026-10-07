@@ -1102,6 +1102,10 @@
   height: 100%;
 }
 
+.bookshelf {
+  position: relative; /* 책값 팝업이 책장 창 안에서 뜹니다 */
+}
+
 .bookshelf--empty {
   align-items: flex-start;
 }
@@ -1322,6 +1326,264 @@
   text-align: center;
   word-break: keep-all;
   box-shadow: inset 4px 0 0 rgba(0, 0, 0, 0.25);
+}
+
+/* 책 정보 팝업. Windows 98의 노란 풍선 도움말 모양입니다. */
+.bookshelf__info {
+  position: fixed;
+  z-index: 10000;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  box-sizing: border-box;
+  width: max-content;
+  max-width: min(280px, calc(100vw - 16px));
+  padding: 6px 8px;
+  border: 1px solid #000000;
+  background: #ffffe1;
+  box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.4);
+  color: #000000;
+  font-size: 12px;
+  line-height: 1.4;
+  pointer-events: none; /* 마우스 위에서는 아래 책의 클릭을 가로채지 않습니다 */
+}
+
+.bookshelf__info--touch {
+  pointer-events: auto;
+}
+
+.bookshelf__info-title {
+  font-size: 13px;
+  word-break: keep-all;
+}
+
+.bookshelf__info-title span {
+  color: #800000;
+}
+
+.bookshelf__info-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.bookshelf__info-badge {
+  padding: 0 6px;
+  border: 1px solid currentColor;
+  font-size: 11px;
+}
+
+.bookshelf__info-badge--wishlist {
+  color: #444444;
+}
+
+.bookshelf__info-badge--reading {
+  color: #a01010;
+}
+
+.bookshelf__info-badge--finished {
+  color: #006000;
+}
+
+.bookshelf__info dl {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  margin: 0;
+}
+
+.bookshelf__info dl > div {
+  display: flex;
+  gap: 8px;
+}
+
+.bookshelf__info dt {
+  flex: none;
+  width: 42px;
+  color: #555555;
+}
+
+.bookshelf__info dd {
+  margin: 0;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.bookshelf__info button {
+  align-self: flex-end;
+  margin-top: 2px;
+  padding: 3px 12px;
+}
+
+/* 책값 팝업 */
+.bookshelf__overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+  background: transparent; /* Windows 98 대화상자는 뒤를 어둡게 하지 않습니다. 클릭만 막습니다. */
+}
+
+.price-dialog {
+  width: min(408px, 100%);
+}
+
+.price-dialog__content {
+  flex: 1;
+  min-width: 0;
+}
+
+.price-dialog__content p {
+  margin: 0;
+}
+
+.price-dialog__icon {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 38px;
+  min-height: 38px;
+}
+
+.price-dialog__heading {
+  margin-bottom: 4px !important;
+  font-size: 13px;
+  font-weight: bold;
+}
+
+.price-dialog__scope {
+  margin-bottom: 10px !important;
+  color: var(--win-text-muted);
+}
+
+.price-dialog__summary {
+  margin-bottom: 8px;
+  padding: 10px 12px 8px;
+  border: 2px inset var(--win-face);
+  background: var(--win-light);
+}
+
+.price-dialog__total-label {
+  display: block;
+  margin-bottom: 2px;
+  color: var(--win-text-muted);
+  font-size: 11px;
+}
+
+.price-dialog__total {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 24px;
+  line-height: 1.15;
+  font-variant-numeric: tabular-nums;
+}
+
+.price-dialog__stats {
+  display: flex;
+  gap: 0;
+  padding-top: 6px;
+  border-top: 1px solid var(--win-shadow);
+  color: var(--win-text-muted);
+  font-size: 11px;
+}
+
+.price-dialog__stats span {
+  flex: 1;
+}
+
+.price-dialog__stats span + span {
+  padding-left: 10px;
+  border-left: 1px solid var(--win-shadow);
+}
+
+.price-dialog__stats strong {
+  color: var(--win-text);
+}
+
+.price-dialog__found,
+.price-dialog__notice,
+.price-dialog__error {
+  margin-top: 6px !important;
+  padding: 6px 8px;
+  word-break: keep-all;
+}
+
+.price-dialog__found {
+  border: 1px solid #008000;
+  background: #f0fff0;
+  color: #006000;
+}
+
+.price-dialog__found span {
+  font-weight: bold;
+}
+
+.price-dialog__notice {
+  border: 1px solid #808000;
+  background: #ffffdf;
+}
+
+.price-dialog__error {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  border: 1px solid var(--win-danger);
+  background: #fff0f0;
+  color: var(--win-danger);
+}
+
+/* Windows 98 진행 막대: 움푹 들어간 칸에 남색 블록이 채워집니다. */
+.price-dialog__bar {
+  height: 20px;
+  margin: 12px 0 5px;
+  padding: 2px;
+  border: 2px inset var(--win-face);
+  background: var(--win-light);
+}
+
+.price-dialog__bar span {
+  display: block;
+  height: 100%;
+  background: repeating-linear-gradient(to right, var(--win-selection) 0, var(--win-selection) 8px, transparent 8px, transparent 10px);
+}
+
+.price-dialog__progress-meta {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  color: var(--win-text-muted);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+
+.price-dialog__progress-meta strong {
+  color: var(--win-text);
+}
+
+.price-dialog .modal98__buttons {
+  justify-content: flex-end;
+}
+
+@media (max-width: 480px) {
+  .price-dialog .modal98__body {
+    gap: 10px;
+    padding-right: 12px;
+    padding-left: 12px;
+  }
+
+  .price-dialog__stats,
+  .price-dialog__progress-meta {
+    flex-direction: column;
+    gap: 3px;
+  }
+
+  .price-dialog__stats span + span {
+    padding-left: 0;
+    border-left: 0;
+  }
 }
 
 /* ====== BookDetail ====== */

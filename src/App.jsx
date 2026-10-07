@@ -581,6 +581,7 @@ export default function App() {
         <BookshelfWindow
           isReady={libraryDb.isReady}
           books={libraryDb.books}
+          fillBookPrices={libraryDb.fillBookPrices}
           onOpenLibrary={isMobile ? openLibrary : openLibraryWindow}
           onOpenBook={openLibraryAtBook}
           onClose={isMobile ? undefined : () => closeWindow(w.id)}

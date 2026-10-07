@@ -22,6 +22,7 @@ CREATE TABLE IF NOT EXISTS books (
   publisher TEXT,
   isbn TEXT,
   cover_url TEXT,
+  price INTEGER, -- 정가(원). 비어 있으면 모르는 것
   status TEXT NOT NULL DEFAULT 'wishlist' CHECK(status IN ('wishlist','reading','finished')),
   start_date TEXT,
   finish_date TEXT,
@@ -89,6 +90,8 @@ function prepareDatabase(db) {
   ;['translator', 'publisher'].forEach((col) => {
     if (!bookColumns.includes(col)) db.run(`ALTER TABLE books ADD COLUMN ${col} TEXT`)
   })
+  // 가격 기능 이전에 만든 파일에도 컬럼을 추가합니다.
+  if (!bookColumns.includes('price')) db.run('ALTER TABLE books ADD COLUMN price INTEGER')
   // "읽은 시기 미상" 표시 이전에 만든 파일에도 컬럼을 추가합니다.
   const DATE_UNKNOWN_DDL = 'ADD COLUMN date_unknown INTEGER NOT NULL DEFAULT 0'
   if (!bookColumns.includes('date_unknown')) db.run(`ALTER TABLE books ${DATE_UNKNOWN_DDL}`)
@@ -180,6 +183,7 @@ function parseBookRow(row) {
     publisher: row.publisher || '',
     isbn: row.isbn || '',
     coverUrl: row.cover_url || '',
+    price: row.price ?? null,
     status: row.status,
     startDate: row.start_date || '',
     finishDate: row.finish_date || '',
@@ -232,10 +236,13 @@ export function upsertBook(db, book) {
   const dateUnknown = book.dateUnknown ? 1 : 0
   const startDate = dateUnknown ? null : book.startDate || null
   const finishDate = dateUnknown ? null : book.finishDate || null
+  // 가격은 0보다 큰 정수(원)만 저장하고, 비어 있거나 잘못된 값은 "모름"으로 둡니다.
+  const rawPrice = Math.round(Number(book.price))
+  const price = Number.isFinite(rawPrice) && rawPrice > 0 ? rawPrice : null
 
   if (book.id) {
     db.run(
-      `UPDATE books SET title=?, author=?, translator=?, publisher=?, isbn=?, cover_url=?, status=?, start_date=?, finish_date=?, rating=?, date_unknown=?, tags=?, updated_at=?
+      `UPDATE books SET title=?, author=?, translator=?, publisher=?, isbn=?, cover_url=?, price=?, status=?, start_date=?, finish_date=?, rating=?, date_unknown=?, tags=?, updated_at=?
        WHERE id=?`,
       [
         book.title,
@@ -244,6 +251,7 @@ export function upsertBook(db, book) {
         book.publisher || null,
         book.isbn || null,
         book.coverUrl || null,
+        price,
         book.status,
         startDate,
         finishDate,
@@ -258,8 +266,8 @@ export function upsertBook(db, book) {
   }
 
   db.run(
-    `INSERT INTO books (title, author, translator, publisher, isbn, cover_url, status, start_date, finish_date, rating, date_unknown, tags, created_at, updated_at)
-     VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+    `INSERT INTO books (title, author, translator, publisher, isbn, cover_url, price, status, start_date, finish_date, rating, date_unknown, tags, created_at, updated_at)
+     VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
     [
       book.title,
       book.author || null,
@@ -267,6 +275,7 @@ export function upsertBook(db, book) {
       book.publisher || null,
       book.isbn || null,
       book.coverUrl || null,
+      price,
       book.status,
       startDate,
       finishDate,
@@ -279,6 +288,16 @@ export function upsertBook(db, book) {
   )
   const [{ id }] = queryAll(db, 'SELECT last_insert_rowid() as id')
   return id
+}
+
+/**
+ * 가격이 비어 있는 책에 정가를 채웁니다. entries는 [[책 id, 가격], ...]입니다.
+ * 직접 입력해 둔 가격은 덮어쓰지 않고, 수정한 시각(updated_at)도 건드리지 않아 서재 목록 순서가 그대로입니다.
+ */
+export function fillBookPrices(db, entries) {
+  entries.forEach(([id, price]) => {
+    db.run('UPDATE books SET price = ? WHERE id = ? AND (price IS NULL OR price <= 0)', [Math.round(price), id])
+  })
 }
 
 /** 책을 완전히 지웁니다(휴지통에서 영구 삭제). 감상문·랭킹·회차·인용구는 외래키 CASCADE로 함께 지워집니다. */

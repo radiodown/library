@@ -1,5 +1,6 @@
 import { Fragment } from 'react'
 import { useDialog } from './dialogContext'
+import { formatWon } from '../utils/price'
 import { toPreviewText } from '../utils/reviewPreview'
 import ReadingHistory from './ReadingHistory'
 import QuoteList from './QuoteList'
@@ -84,6 +85,7 @@ export default function BookDetail({
               )}
             </p>
           )}
+          {book.price > 0 && <p className="book-detail__meta">정가 {formatWon(book.price)}</p>}
           <p>
             <StatusIcon status={book.status} withLabel />
             <Stars value={book.rating} className="book-detail__rating" />

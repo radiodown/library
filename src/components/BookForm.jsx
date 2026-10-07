@@ -13,6 +13,7 @@ const EMPTY_BOOK = {
   publisher: '',
   isbn: '',
   coverUrl: '',
+  price: null,
   status: 'wishlist',
   startDate: '',
   finishDate: '',
@@ -82,6 +83,7 @@ export default function BookForm({
       publisher: r.publisher,
       isbn: r.isbn,
       coverUrl: r.coverUrl,
+      price: r.price,
     })
     setResults(null)
     // 포커스를 저장 버튼으로 옮겨, 이어서 Enter를 누르면 바로 추가되게 합니다.
@@ -131,6 +133,7 @@ export default function BookForm({
       ...form,
       id: book?.id,
       rating: form.rating === '' || form.rating === null ? null : Number(form.rating),
+      price: form.price === '' || form.price === null ? null : Number(form.price),
       tags,
     })
   }
@@ -233,6 +236,19 @@ export default function BookForm({
       <label>
         ISBN
         <input value={form.isbn} onChange={(e) => update({ isbn: e.target.value })} />
+      </label>
+
+      <label>
+        가격(원)
+        <input
+          type="number"
+          min="0"
+          step="100"
+          inputMode="numeric"
+          placeholder="예: 15000"
+          value={form.price ?? ''}
+          onChange={(e) => update({ price: e.target.value === '' ? null : e.target.value })}
+        />
       </label>
 
       <label>

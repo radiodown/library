@@ -6,6 +6,7 @@ import {
   getLibraryId,
   getBooks,
   upsertBook,
+  fillBookPrices as fillBookPriceRows,
   deleteBook,
   getTrashedBooks,
   trashBook,
@@ -305,6 +306,16 @@ export function useLibraryDb({ rememberLast = false } = {}) {
     [refreshAll],
   )
 
+  const fillBookPrices = useCallback(
+    (entries) => {
+      if (!dbRef.current || entries.length === 0) return
+      fillBookPriceRows(dbRef.current, entries)
+      markDirty()
+      refreshAll()
+    },
+    [refreshAll],
+  )
+
   // 책 삭제는 완전히 지우지 않고 휴지통으로 보냅니다. 복원하면 감상문/회차/인용구도 그대로 돌아옵니다.
   const removeBook = useCallback(
     (id) => {
@@ -457,6 +468,7 @@ export function useLibraryDb({ rememberLast = false } = {}) {
     openLibrary,
     saveLibrary,
     addOrUpdateBook,
+    fillBookPrices,
     removeBook,
     listReviews,
     listAllReviews,
