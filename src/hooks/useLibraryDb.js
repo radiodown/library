@@ -25,10 +25,6 @@ import {
   getQuotes,
   upsertQuote,
   deleteQuote,
-  getNovels,
-  getNovel,
-  saveNovel as saveNovelRows,
-  deleteNovel as deleteNovelRows,
 } from '../db/sqlite'
 import { openDbFile, saveDbFile, isFileSystemAccessSupported } from '../db/fileIO'
 import { downloadFromDrive, uploadToDrive, isDriveConfigured } from '../db/googleDrive'
@@ -57,7 +53,6 @@ export function useLibraryDb({ rememberLast = false } = {}) {
   const [trashedBooks, setTrashedBooks] = useState([]) // 휴지통에 있는 책
   const [readings, setReadings] = useState([]) // 모든 책의 다시 읽기(2회차~)
   const [quotes, setQuotes] = useState([]) // 모든 책의 인용구
-  const [novels, setNovels] = useState([]) // 소설 집필 작품 목록 { id, title, chars, updatedAt }
   const [fileName, setFileName] = useState(null)
   const [isDirty, setIsDirty] = useState(false)
   const [isReady, setIsReady] = useState(false)
@@ -113,7 +108,6 @@ export function useLibraryDb({ rememberLast = false } = {}) {
     setNextBookIdsState(getNextBookIds(dbRef.current))
     setReadings(getReadings(dbRef.current))
     setQuotes(getQuotes(dbRef.current))
-    setNovels(getNovels(dbRef.current))
   }, [])
 
   const runGuarded = useCallback(async (fn) => {
@@ -427,30 +421,6 @@ export function useLibraryDb({ rememberLast = false } = {}) {
     setReviewsVersion((v) => v + 1)
   }, [])
 
-  // ---- 소설 집필 ----
-  // 창이 열려 있는 동안 서재가 바뀌면 다른 서재에 쓰지 않도록, 감상문처럼 서재 id를 확인합니다.
-  const checkLibrary = (expectedLibraryId) => {
-    if (!dbRef.current || (expectedLibraryId && getLibraryId(dbRef.current) !== expectedLibraryId)) {
-      throw new Error('서재가 바뀌었습니다. 원래 서재를 다시 열어 주세요.')
-    }
-  }
-
-  const loadNovel = useCallback((id) => (dbRef.current ? getNovel(dbRef.current, id) : null), [])
-
-  const saveNovel = useCallback((novel, charCount, expectedLibraryId) => {
-    checkLibrary(expectedLibraryId)
-    saveNovelRows(dbRef.current, novel, charCount)
-    markDirty()
-    setNovels(getNovels(dbRef.current))
-  }, [])
-
-  const removeNovel = useCallback((id, expectedLibraryId) => {
-    checkLibrary(expectedLibraryId)
-    deleteNovelRows(dbRef.current, id)
-    markDirty()
-    setNovels(getNovels(dbRef.current))
-  }, [])
-
   return {
     libraryId,
     librarySession,
@@ -482,10 +452,6 @@ export function useLibraryDb({ rememberLast = false } = {}) {
     quotes,
     saveQuote,
     removeQuote,
-    novels,
-    loadNovel,
-    saveNovel,
-    removeNovel,
     fsaSupported: isFileSystemAccessSupported(),
     newLibrary,
     openLibrary,

@@ -222,6 +222,7 @@ export default function LibraryWindow({
       items: [
         { label: '도구 모음', onClick: toggleToolbar, checked: toolbarVisible },
         { separator: true },
+        { label: '책장', onClick: () => onOpenWindow('bookshelf'), disabled: !isReady },
         { label: '검색', onClick: () => onOpenWindow('search'), disabled: !isReady },
         { label: '다음 책', onClick: () => onOpenWindow('next-books'), disabled: !isReady },
         { label: '독서 통계', onClick: () => onOpenWindow('stats'), disabled: !isReady },

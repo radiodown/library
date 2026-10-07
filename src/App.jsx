@@ -10,6 +10,7 @@ import ReviewQuickWindow from './components/ReviewQuickWindow'
 import ReviewEditWindow from './components/ReviewEditWindow'
 import ReviewViewWindow from './components/ReviewViewWindow'
 import NextBooksWindow from './components/NextBooksWindow'
+import BookshelfWindow from './components/BookshelfWindow'
 import StatsWindow from './components/StatsWindow'
 import QuoteOfDayWindow from './components/QuoteOfDayWindow'
 import MobileLibrary from './components/MobileLibrary'
@@ -24,7 +25,6 @@ import TrashWindow from './components/TrashWindow'
 import PowerScreen from './components/PowerScreen'
 import ShutdownDialog from './components/ShutdownDialog'
 import TetrisWindow from './components/TetrisWindow'
-import NovelWindow from './components/NovelWindow'
 import SaveStatusTray from './components/SaveStatusTray'
 import { readReviewDraft } from './utils/reviewDrafts'
 import './App.css'
@@ -200,21 +200,20 @@ export default function App() {
       initialSize: { width: 400, height: 500 },
     })
 
-  // 소설 집필 프로그램. 서재의 책과는 연결되지 않지만 작품은 서재 파일에 함께 저장됩니다. (모바일은 읽기 전용이라 두지 않음)
-  const openNovelWindow = () =>
-    openWindow('novel', {
-      title: '소설 집필',
-      icon: 'fountain-pen',
-      initialPosition: { x: 90, y: 40 },
-      initialSize: { width: 980, height: 640 },
-    })
-
   const openNextBooksWindow = () =>
     openWindow('next-books', {
       title: '다음 책',
       icon: 'bookmark',
       initialPosition: { x: 120, y: 80 },
       initialSize: { width: 760, height: 520 },
+    })
+
+  const openBookshelfWindow = () =>
+    openWindow('bookshelf', {
+      title: '책장',
+      icon: 'bookshelf',
+      initialPosition: { x: 150, y: 60 },
+      initialSize: { width: 820, height: 540 },
     })
 
   // 시계를 빠르게 여러 번 누르면 나오는 크레딧(이스터에그)
@@ -312,6 +311,7 @@ export default function App() {
     ({
       search: () => openSearchWindow(),
       'next-books': openNextBooksWindow,
+      bookshelf: openBookshelfWindow,
       stats: openStatsWindow,
       quote: openQuoteOfDayWindow,
       trash: openTrashWindow,
@@ -335,11 +335,11 @@ export default function App() {
 
   const startMenuItems = [
     { icon: 'library', label: '서재', onClick: openLibraryWindow },
+    { icon: 'bookshelf', label: '책장', onClick: openBookshelfWindow },
     { icon: 'search', label: '검색', onClick: () => openSearchWindow() },
     { icon: 'bookmark', label: '다음 책', onClick: openNextBooksWindow },
     { icon: 'chart', label: '독서 통계', onClick: openStatsWindow },
     { icon: 'quote', label: '오늘의 인용구', onClick: openQuoteOfDayWindow },
-    { icon: 'fountain-pen', label: '소설 집필', onClick: openNovelWindow },
     { separator: true },
     { icon: 'document-new', label: '새 서재 만들기', onClick: libraryDb.newLibrary },
     { icon: 'folder-open', label: '서재 불러오기', onClick: openLibrary },
@@ -359,6 +359,7 @@ export default function App() {
   // 모바일: 서재/랭킹/통계/인용구 창은 읽기 전용 화면으로 보여 줍니다.
   const mobileMenuItems = [
     { icon: 'library', label: '서재', onClick: openLibraryWindow },
+    { icon: 'bookshelf', label: '책장', onClick: openBookshelfWindow },
     { icon: 'search', label: '검색', onClick: () => openSearchWindow() },
     { icon: 'bookmark', label: '다음 책', onClick: openNextBooksWindow },
     { icon: 'chart', label: '독서 통계', onClick: openStatsWindow },
@@ -456,35 +457,6 @@ export default function App() {
           addOrUpdateBook={libraryDb.addOrUpdateBook}
           onOpenReview={openReviewEditWindow}
           onOpenLibrary={openLibraryWindow}
-        />
-      )
-    }
-    if (w.id === 'novel') {
-      if (!isReady) {
-        return (
-          <div className="trash trash--empty">
-            <p>작품은 서재 파일 안에 저장됩니다. 먼저 서재를 열거나 새로 만들어 주세요.</p>
-            <span className="novel-home__actions">
-              <button type="button" onClick={openLibrary}>서재 불러오기</button>
-              <button type="button" onClick={libraryDb.newLibrary}>새 서재 만들기</button>
-            </span>
-          </div>
-        )
-      }
-      return (
-        <NovelWindow
-          key={libraryDb.librarySession}
-          libraryId={libraryDb.libraryId}
-          novels={libraryDb.novels}
-          loadNovel={libraryDb.loadNovel}
-          saveNovel={libraryDb.saveNovel}
-          removeNovel={libraryDb.removeNovel}
-          onSaveLibrary={() => saveLibrary(false)}
-          onClose={() => closeWindow(w.id)}
-          registerEditor={(editor) => {
-            editorsRef.current.set(w.id, editor)
-            return () => editorsRef.current.delete(w.id)
-          }}
         />
       )
     }
@@ -604,6 +576,17 @@ export default function App() {
         />
       )
     }
+    if (w.id === 'bookshelf') {
+      return (
+        <BookshelfWindow
+          isReady={libraryDb.isReady}
+          books={libraryDb.books}
+          onOpenLibrary={isMobile ? openLibrary : openLibraryWindow}
+          onOpenBook={openLibraryAtBook}
+          onClose={isMobile ? undefined : () => closeWindow(w.id)}
+        />
+      )
+    }
     if (w.id.startsWith('review-view-')) {
       const review = libraryDb.listReviews(w.bookId).find((r) => r.id === w.reviewId) || null
       const view = (
@@ -669,6 +652,7 @@ export default function App() {
             )}
             <DesktopIcon icon="folder-open" label="서재 열기" onActivate={openLibrary} tapToOpen />
             <DesktopIcon icon="library" label="서재" onActivate={openLibraryWindow} tapToOpen />
+            <DesktopIcon icon="bookshelf" label="책장" onActivate={openBookshelfWindow} tapToOpen />
             <DesktopIcon icon="bookmark" label="다음 책" onActivate={openNextBooksWindow} tapToOpen />
             <DesktopIcon icon="chart" label="통계" onActivate={openStatsWindow} tapToOpen />
             <DesktopIcon icon="quote" label="인용구" onActivate={openQuoteOfDayWindow} tapToOpen />
@@ -688,8 +672,8 @@ export default function App() {
                 { label: '속성', onClick: openPropertiesWindow },
               ]}
             />
+            <DesktopIcon icon="bookshelf" label="책장" onActivate={openBookshelfWindow} tapToOpen={desktopMode} />
             <DesktopIcon icon="notepad" label="감상문" onActivate={openReviewWindow} tapToOpen={desktopMode} />
-            <DesktopIcon icon="fountain-pen" label="소설 집필" onActivate={openNovelWindow} tapToOpen={desktopMode} />
             <DesktopIcon icon="blocks" label="테트리스" onActivate={openTetrisWindow} tapToOpen={desktopMode} />
             <DesktopIcon
               icon={libraryDb.trashedBooks.length ? 'trash-full' : 'trash'}
