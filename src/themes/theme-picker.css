@@ -1,0 +1,26 @@
+.theme-picker { padding: 6px; }
+.theme-picker__intro { margin: 4px 0 16px; font-size: 14px; }
+.theme-picker__options { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.theme-picker__option { display: flex; flex-direction: column; padding: 8px; gap: 8px; text-align: left; min-width: 0; }
+.theme-picker__option.is-selected { outline: 2px solid var(--win-selection); outline-offset: 2px; }
+.theme-picker__name { display: flex; justify-content: space-between; width: 100%; font-weight: bold; font-size: 14px; }
+.theme-picker__description { color: var(--win-text-muted); font-size: 11px; line-height: 1.5; }
+.theme-picker__status { margin: 18px 0 4px; }
+.theme-picker__hint { margin: 0; font-size: 11px; color: var(--win-text-muted); line-height: 1.6; }
+.theme-preview { position: relative; display: block; width: 100%; height: 116px; overflow: hidden; }
+.theme-preview__window { position: absolute; inset: 20px 20px 28px 22px; }
+.theme-preview__bar { display: block; height: 12px; }
+.theme-preview__lines { display: block; margin: 9px; height: 18px; background: repeating-linear-gradient(to bottom, #c9ced9 0 3px, transparent 3px 7px); }
+.theme-preview__dock { position: absolute; bottom: 0; left: 0; right: 0; height: 16px; }
+.theme-preview--classic { background: #008080; }
+.theme-preview--classic .theme-preview__window { border: 2px outset #c0c0c0; background: #f6f6f6; box-shadow: 3px 3px 0 #0004; }
+.theme-preview--classic .theme-preview__bar { background: linear-gradient(90deg, #000080, #1084d0); }
+.theme-preview--classic .theme-preview__dock { background: #c0c0c0; border-top: 2px solid white; }
+.theme-preview--liquid { border-radius: 12px; background: radial-gradient(ellipse at 15% 90%, #59c9e9, transparent 70%), linear-gradient(130deg, #cae7fc, #b2adfa 65%, #f5bed8); }
+.theme-preview--liquid .theme-preview__window { border: 1px solid #fffd; background: #ffffffb0; border-radius: 10px; box-shadow: 0 6px 15px #585c8533; }
+.theme-preview--liquid .theme-preview__bar { height: 17px; border-bottom: 1px solid #fff8; border-radius: 9px 9px 0 0; background: #fff5; }
+.theme-preview--liquid .theme-preview__dock { bottom: 7px; left: 20px; right: 20px; height: 14px; border: 1px solid #fffc; border-radius: 20px; background: #ffffff75; }
+.taskbar__theme { display: inline-flex; align-items: center; justify-content: center; gap: 5px; flex: none; padding: 4px 8px; }
+.taskbar__theme .pixel-icon { width: 16px; height: 16px; }
+.is-mobile .taskbar__theme-label { display: none; }
+.is-mobile .taskbar__theme { min-width: 40px; }

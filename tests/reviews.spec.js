@@ -26,9 +26,18 @@ async function startMenu(page, label) {
 }
 
 async function loadFile(page, bytes) {
-  const choosing = page.waitForEvent('filechooser')
+  // Recent Edge versions may not emit filechooser for a detached input.
+  // Attach the fallback input and populate it directly, as in bookshelf tests.
+  await page.evaluate(() => {
+    const click = HTMLInputElement.prototype.click
+    HTMLInputElement.prototype.click = function () {
+      if (this.type !== 'file') return click.call(this)
+      this.hidden = true
+      document.body.append(this)
+    }
+  })
   await startMenu(page, '서재 불러오기')
-  await (await choosing).setFiles({ name: 'legacy.db', mimeType: 'application/octet-stream', buffer: bytes })
+  await page.locator('input[type=file]').setInputFiles({ name: 'legacy.db', mimeType: 'application/octet-stream', buffer: bytes })
 }
 
 // 감상문 편집 창은 워드패드식이라 "저장 후 닫기"는 파일 메뉴, 편집 방식은 보기 메뉴에 있습니다.

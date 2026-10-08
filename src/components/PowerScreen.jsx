@@ -1,4 +1,6 @@
 import { useEffect } from 'react'
+import { useTheme } from '../hooks/useTheme'
+import PixelIcon from './PixelIcon'
 
 const BOOT_MS = 2200
 const SHUTDOWN_MS = 1600
@@ -19,6 +21,7 @@ function useAnyInput(onTrigger) {
 
 /** 시작 화면: 로고와 진행 막대. 누르거나 키를 누르면 건너뜁니다. */
 function BootScreen({ onDone }) {
+  const theme = useTheme()
   useEffect(() => {
     const timer = setTimeout(onDone, prefersReducedMotion() ? 600 : BOOT_MS)
     return () => clearTimeout(timer)
@@ -28,15 +31,15 @@ function BootScreen({ onDone }) {
   return (
     <div className="power power--boot" role="status" aria-label="서재를 시작하는 중">
       <div className="power__brand">
-        <img
+        {theme === 'liquid' ? <span className="power__logo"><PixelIcon name="library" size={48} /></span> : <img
           className="power__logo"
           src={`${import.meta.env.BASE_URL}favicon.svg`}
           alt=""
           draggable={false}
-        />
+        />}
         <div>
           <div className="power__name">
-            Library<strong>98</strong>
+            Library{theme === 'classic' && <strong>98</strong>}
           </div>
           <div className="power__sub">내 서재</div>
         </div>

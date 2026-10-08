@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import PixelIcon from './PixelIcon'
+import GlassBackdrop from './GlassBackdrop'
+import { useTheme } from '../hooks/useTheme'
 
 /** 시작 버튼용 4색 깃발 로고 (인라인 SVG, 16x16). */
 function StartLogo() {
@@ -18,7 +20,8 @@ function StartLogo() {
  * menuItems: { icon, label, onClick } 또는 { separator: true } 배열
  * tray: 시계 왼쪽 알림 영역에 넣을 내용 (서재 저장 상태 등)
  */
-export default function Taskbar({ windows, activeId, onToggle, menuItems = [], onClockEasterEgg, tray }) {
+export default function Taskbar({ windows, activeId, onToggle, menuItems = [], onClockEasterEgg, onOpenTheme, tray }) {
+  const theme = useTheme()
   const [now, setNow] = useState(new Date())
   const [menuOpen, setMenuOpen] = useState(false)
   const startRef = useRef(null)
@@ -49,12 +52,14 @@ export default function Taskbar({ windows, activeId, onToggle, menuItems = [], o
 
   return (
     <div className="taskbar">
+      <GlassBackdrop radius={28} />
       <div className="taskbar__start-wrap" ref={startRef}>
         {menuOpen && (
           <div className="start-menu">
+            <GlassBackdrop radius={24} />
             <div className="start-menu__banner" aria-hidden="true">
               <span>
-                Library<strong>98</strong>
+                Library{theme === 'classic' && <strong>98</strong>}
               </span>
             </div>
             <ul className="start-menu__list" role="menu">
@@ -90,7 +95,7 @@ export default function Taskbar({ windows, activeId, onToggle, menuItems = [], o
           aria-expanded={menuOpen}
           onClick={() => setMenuOpen((open) => !open)}
         >
-          <StartLogo />
+          {theme === 'liquid' ? <PixelIcon name="library" /> : <StartLogo />}
           시작
         </button>
       </div>
@@ -111,6 +116,10 @@ export default function Taskbar({ windows, activeId, onToggle, menuItems = [], o
       </div>
 
       {tray}
+
+      <button type="button" className="taskbar__theme" aria-label="화면 테마" title="화면 테마" onClick={onOpenTheme}>
+        <PixelIcon name="palette" /><span className="taskbar__theme-label">테마</span>
+      </button>
 
       <div
         className="taskbar__clock"

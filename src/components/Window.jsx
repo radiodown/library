@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react'
 import PixelIcon from './PixelIcon'
+import GlassBackdrop from './GlassBackdrop'
 
 const MIN_WIDTH = 360
 const MIN_HEIGHT = 220
@@ -95,12 +96,15 @@ export default function Window({
             }
       }
       onPointerDownCapture={onFocus}
+      role={dialog ? 'dialog' : undefined}
+      aria-label={dialog ? title : undefined}
     >
       <div
         className="win__titlebar"
         onPointerDown={handleTitlePointerDown}
         onDoubleClick={() => !maximized && !dialog && setZoomed((z) => !z)}
       >
+        <GlassBackdrop radius={18} />
         <span className="win__icon">
           <PixelIcon name={icon} />
         </span>

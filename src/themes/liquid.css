@@ -1,0 +1,327 @@
+/* The classic rules remain the default. Every override belongs to this theme. */
+html[data-theme='liquid'] {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Malgun Gothic', sans-serif;
+  font-size: 13px;
+  color-scheme: light;
+  --win-face: #edf1f8;
+  --win-face-light: #f5f7fc;
+  --win-light: #ffffff;
+  --win-shadow: #9ba9c0;
+  --win-dark-shadow: #3c4b65;
+  --win-title-start: #eef5ff;
+  --win-title-end: #e6eafd;
+  --win-title-text: #243652;
+  --win-selection: #2469df;
+  --win-title-active: #2469df;
+  --win-selection-text: #ffffff;
+  --win-desktop: #c3d8f2;
+  --win-text: #24324a;
+  --win-text-muted: #62718a;
+  --win-danger: #b7324e;
+  --glass-border: #d8e1ef;
+  --glass-shadow: 0 18px 55px #334a7726, 0 3px 12px #42548012;
+  --glass-wallpaper: radial-gradient(ellipse at 8% 92%, #65ccde 0%, transparent 50%),
+    radial-gradient(ellipse at 85% 12%, #efc8e6 0%, transparent 45%),
+    radial-gradient(ellipse at 62% 76%, #b3adf1 0%, transparent 58%),
+    linear-gradient(140deg, #e1f1ff 0%, #bbd9f6 40%, #d4c9f3 100%);
+  -webkit-font-smoothing: antialiased;
+}
+
+html[data-theme='liquid'] body {
+  background: var(--glass-wallpaper) fixed;
+  line-height: 1.5;
+}
+
+/* Shared controls, including dialogs and the third-party editor. */
+html[data-theme='liquid'] button {
+  border: 1px solid var(--glass-border);
+  border-radius: 10px;
+  background-color: #ffffffa6;
+  padding: 6px 12px;
+  color: var(--win-text);
+  box-shadow: 0 1px 2px #3443680a;
+  text-shadow: none;
+  transition: background-color 150ms, box-shadow 150ms, border-color 150ms;
+}
+
+html[data-theme='liquid'] button:hover:not(:disabled) { background-color: #fff; filter: none; border-color: #b8c8e1; }
+html[data-theme='liquid'] button:active:not(:disabled) { border-style: solid; background-color: #e6edfa; }
+html[data-theme='liquid'] button:disabled { color: #758298; opacity: .65; text-shadow: none; }
+html[data-theme='liquid'] button.danger { color: var(--win-danger); }
+html[data-theme='liquid'] :is(button, input, select, textarea, [tabindex]):focus-visible {
+  outline: 2px solid var(--win-selection); outline-offset: 3px;
+}
+html[data-theme='liquid'] :is(input, select, textarea) {
+  border: 1px solid var(--glass-border);
+  border-radius: 9px;
+  padding: 7px 9px;
+  box-shadow: inset 0 1px 2px #34436804;
+  background-color: #fffffff2;
+}
+html[data-theme='liquid'] select {
+  height: 32px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none' stroke='%2362718a' stroke-width='1.5'%3E%3Cpath d='m4 6 4 4 4-4'/%3E%3C/svg%3E");
+  background-position: right 8px center; padding-right: 28px;
+}
+html[data-theme='liquid'] :is(input[type='checkbox'], input[type='radio']) {
+  appearance: auto; -webkit-appearance: auto;
+  width: 16px; height: 16px; min-height: 0; padding: 0;
+  accent-color: var(--win-selection); background-image: none; box-shadow: none;
+}
+html[data-theme='liquid'] :is(input[type='checkbox'], input[type='radio'])::after { content: none; }
+html[data-theme='liquid'] input[type='range'] { appearance: auto; padding: 0; background: transparent; border: 0; accent-color: var(--win-selection); }
+
+/* Glass is decorative and never owns interactive children. */
+.glass-backdrop { position: absolute; inset: 0; border-radius: inherit; pointer-events: none; overflow: hidden; }
+.glass-backdrop__effect > div { box-shadow: none !important; }
+.glass-backdrop::after {
+  content: ''; position: absolute; inset: 0; border-radius: inherit;
+  background: linear-gradient(145deg, #ffffffb5, #ffffff85 55%, #eef1ff9c);
+  box-shadow: inset 0 1px 0 #fffffff0, inset 0 0 0 1px #ffffff75;
+}
+html[data-theme='liquid'] :is(.taskbar, .start-menu, .win__titlebar) { background: transparent; }
+html[data-theme='liquid'] :is(.taskbar, .start-menu, .win__titlebar) > :not(.glass-backdrop) { position: relative; z-index: 1; }
+
+/* Wallpaper, app icons, and windows. */
+html[data-theme='liquid'] .desktop { --taskbar-h: 86px; min-height: 100dvh; padding-bottom: var(--taskbar-h); }
+html[data-theme='liquid'] .desktop__icons { top: 24px; left: 20px; gap: 14px; }
+html[data-theme='liquid'] .desktop-icon {
+  border: 1px solid transparent; border-radius: 18px; width: 88px;
+  padding: 8px 4px; color: #243652; background: transparent;
+  box-shadow: none; text-shadow: 0 1px 5px #ffffffa0; gap: 8px;
+}
+html[data-theme='liquid'] .desktop-icon:hover { background: #ffffff35; border-color: #ffffff70; }
+html[data-theme='liquid'] .desktop-icon.is-selected { background: #ffffff66; border-color: #ffffffc9; }
+html[data-theme='liquid'] .desktop-icon__glyph {
+  display: grid; place-items: center; width: 58px; height: 58px; border-radius: 17px;
+  background: linear-gradient(145deg, #71b8ff, #3272e4); color: #fff;
+  border: 1px solid #ffffffa3; box-shadow: inset 0 1px 2px #ffffff95, 0 5px 14px #476fa333;
+}
+html[data-theme='liquid'] .desktop-icon:nth-child(2) .desktop-icon__glyph { background: linear-gradient(145deg, #edb972, #bd804d); }
+html[data-theme='liquid'] .desktop-icon:nth-child(3) .desktop-icon__glyph { background: linear-gradient(145deg, #beadfc, #8372dd); }
+html[data-theme='liquid'] .desktop-icon:nth-child(4) .desktop-icon__glyph { background: linear-gradient(145deg, #6dd9ce, #32a899); }
+html[data-theme='liquid'] .desktop-icon:nth-child(5) .desktop-icon__glyph { background: linear-gradient(145deg, #96a9c4, #687d9d); }
+html[data-theme='liquid'] .desktop-icon__glyph .pixel-icon { width: 30px; height: 30px; }
+html[data-theme='liquid'] .desktop-icon__label { font-size: 12px; font-weight: 600; line-height: 1.4; }
+html[data-theme='liquid'] .modern-icon { image-rendering: auto; vertical-align: middle; }
+html[data-theme='liquid'] .win {
+  border: 1px solid #ffffffda; border-radius: 22px;
+  background: #f5f7fcf2; box-shadow: var(--glass-shadow);
+}
+html[data-theme='liquid'] .win__titlebar {
+  position: relative; flex: none; min-height: 48px; padding: 9px 12px; gap: 9px;
+  color: var(--win-title-text); border-radius: 21px 21px 0 0;
+  border-bottom: 1px solid #d1dbec80;
+}
+html[data-theme='liquid'] .win__title { font-size: 14px; font-weight: 650; }
+html[data-theme='liquid'] .win__icon .pixel-icon { width: 18px; height: 18px; }
+html[data-theme='liquid'] .win__control {
+  width: 28px; height: 28px; border: 1px solid #ffffff70; border-radius: 50%;
+  padding: 0; font-size: 12px; line-height: 1; background: #ffffff85;
+}
+html[data-theme='liquid'] .win__control--close { color: #a5324c; }
+html[data-theme='liquid'] .win__control--close:hover { color: #fff; background: #cf4863; border-color: #cf4863; }
+html[data-theme='liquid'] .win--inactive { box-shadow: 0 8px 30px #334a771a; }
+html[data-theme='liquid'] .win--inactive .win__titlebar { background: #eef2f8; color: #697890; }
+html[data-theme='liquid'] .win--inactive .glass-backdrop { opacity: .5; }
+html[data-theme='liquid'] .win__body { border-radius: 0 0 21px 21px; }
+html[data-theme='liquid'] .win--dialog { max-height: calc(100dvh - var(--taskbar-h, 86px) - 24px); max-width: calc(100vw - 24px); }
+html[data-theme='liquid'] .win__resize-handle { right: 4px; bottom: 4px; background: none; border-right: 2px solid #a4b1c9; border-bottom: 2px solid #a4b1c9; border-radius: 0 0 6px; width: 11px; height: 11px; }
+html[data-theme='liquid'] .win--zoomed { position: fixed; inset: 12px 12px var(--taskbar-h); }
+
+/* A floating dock; menus and tooltips remain outside the glass's clipping box. */
+html[data-theme='liquid'] .taskbar {
+  left: 18px; right: 18px; bottom: 14px; height: 58px; padding: 8px;
+  max-width: 1120px; margin-inline: auto; gap: 8px;
+  border: 1px solid #ffffffc5; border-radius: 28px; box-shadow: var(--glass-shadow);
+}
+html[data-theme='liquid'] .taskbar__start-wrap { flex: none; z-index: 3; }
+html[data-theme='liquid'] :is(.taskbar__start, .taskbar__item, .taskbar__theme, .tray-status__button) {
+  height: 40px; border: 1px solid #ffffff65; border-radius: 21px;
+  background: #ffffff58; padding: 6px 12px; box-shadow: none;
+}
+html[data-theme='liquid'] .taskbar__items { min-width: 0; gap: 6px; scrollbar-width: none; }
+html[data-theme='liquid'] .taskbar__items::-webkit-scrollbar { display: none; }
+html[data-theme='liquid'] .taskbar__item { display: inline-flex; align-items: center; gap: 6px; min-width: 0; flex: 0 0 auto; max-width: 200px; }
+html[data-theme='liquid'] :is(.taskbar__item.is-active, .taskbar__start.is-open) { background: #ffffffd9; color: #2159b8; border-color: #fff; box-shadow: 0 2px 8px #4e6a9515; border-style: solid; }
+html[data-theme='liquid'] .taskbar__clock { flex: none; border: none; background: transparent; padding: 0 10px; font-family: inherit; font-variant-numeric: tabular-nums; font-size: 12px; }
+html[data-theme='liquid'] .tray-status__button { padding: 7px 10px; }
+html[data-theme='liquid'] .tray-status__dot { width: 6px; height: 6px; bottom: 8px; right: 8px; border: 1px solid white; background: #26976c; }
+html[data-theme='liquid'] .tray-status__dot.is-dirty { background: #c84662; animation: none; }
+html[data-theme='liquid'] .tray-status__tip { white-space: normal; width: min(280px, 75vw); }
+html[data-theme='liquid'] .start-menu {
+  background: #f4f7ffdd;
+  flex-direction: column; min-width: 276px; max-height: calc(100dvh - var(--taskbar-h) - 20px);
+  margin-bottom: 14px; padding: 10px; border: 1px solid #ffffffd9; border-radius: 24px;
+  box-shadow: var(--glass-shadow); overflow-y: auto; overscroll-behavior: contain;
+}
+html[data-theme='liquid'] .start-menu__banner {
+  width: auto; padding: 8px 10px 12px; margin: 0; writing-mode: horizontal-tb;
+  transform: none; background: none; color: #3b5277; font-size: 16px; letter-spacing: -.3px;
+  justify-content: flex-start; font-weight: 700;
+}
+html[data-theme='liquid'] .start-menu__item {
+  min-height: 37px; padding: 7px 10px; gap: 12px; border: none; background: transparent;
+  border-radius: 12px; box-shadow: none; font-size: 13px;
+}
+html[data-theme='liquid'] .start-menu__icon { display: grid; place-items: center; width: 24px; }
+html[data-theme='liquid'] .start-menu__icon .pixel-icon { width: 21px; height: 21px; }
+html[data-theme='liquid'] :is(.start-menu__item, .context-menu__item):hover,
+html[data-theme='liquid'] :is(.start-menu__item, .context-menu__item):focus-visible { background: #2469df; border-color: transparent; color: #fff; }
+html[data-theme='liquid'] :is(.start-menu__separator, .context-menu__separator, .props__sep) { margin: 7px 6px; border: 0; border-top: 1px solid #b2c2dd66; }
+
+/* Reading surfaces stay opaque enough for long text. */
+html[data-theme='liquid'] :is(.book-list, .book-list__sheet, .book-list__items, .book-detail, .book-form, .app__detail,
+  .app__empty-state, .app__placeholder, .stats__panel, .stats__tile, .stats__bars, .stats__group, .next-books__col, .next-books__list,
+  .quote-of-day, .quote-dialog, .reading-history, .quote-list, .review-list, .review-viewer,
+  .review-picker__books, .review-picker__reviews, .review-editor__pane, .review-editor__paper, .review-editor__preview, .review-editor__quotes, .m-page,
+  .search-window__results, .search-window__sheet, .search-window__group, .trash__list, .stats__recent, .review-band, .star-input__stars) {
+  border: 1px solid var(--glass-border); border-radius: 14px; box-shadow: none;
+  background-color: #ffffffd9; border-image: none;
+}
+html[data-theme='liquid'] .book-list { padding: 12px; background: #ffffff90; }
+html[data-theme='liquid'] .book-list__header { border-bottom: 1px solid var(--glass-border); padding-bottom: 10px; }
+html[data-theme='liquid'] .book-list__sheet { border: 0; background: transparent; padding: 0; }
+html[data-theme='liquid'] .book-list__items { gap: 4px; padding: 5px; }
+html[data-theme='liquid'] .book-list__items li { padding: 10px; border-radius: 9px; gap: 9px; }
+html[data-theme='liquid'] .book-list__items li:hover { background: #edf3ff; }
+html[data-theme='liquid'] .book-list__items li.is-selected { background: #2469df; }
+html[data-theme='liquid'] .book-list__meta { font-size: 12px; }
+html[data-theme='liquid'] :is(.book-list__tabs, .stats__tabs, .search-window__tabs) {
+  align-items: center; gap: 3px; padding: 4px; margin: 0 0 10px; border-radius: 12px;
+  border: 1px solid #dce4f1; background: #e8eef7; box-shadow: none;
+}
+html[data-theme='liquid'] :is(.book-list__tab, .stats__tab, .search-window__tabs button) {
+  top: 0; margin: 0; padding: 6px 8px; border: 1px solid transparent; border-radius: 9px;
+  background: transparent; box-shadow: none; font-weight: 500;
+}
+html[data-theme='liquid'] :is(.book-list__tab, .stats__tab, .search-window__tabs button).is-active {
+  margin: 0; padding: 6px 8px; border: 1px solid #fff; background: #fff; color: #205bbd;
+  box-shadow: 0 2px 6px #3a568414; font-weight: 650;
+}
+html[data-theme='liquid'] :is(.stats__badge, .status-badge) { border: none; border-radius: 7px; padding: 2px 6px; }
+html[data-theme='liquid'] :is(.book-search__results button, .review-picker__books button, .review-picker__reviews button) { border-radius: 9px; box-shadow: none; }
+html[data-theme='liquid'] :is(.stats__callout, .save-status__notice, .review-editor__draft-notice) { background: #eef5ff; border: 1px solid #d6e4fa; border-radius: 10px; padding: 8px 10px; }
+html[data-theme='liquid'] :is(.review-list__item, .quote-list__item, .reading-history__item, .next-books__item, .search-window__items li) { border-color: var(--glass-border); border-radius: 10px; }
+html[data-theme='liquid'] :is(.book-detail__header, .stats__heading) { border-color: var(--glass-border); border-bottom-style: solid; }
+html[data-theme='liquid'] .book-detail__tag { border: 1px solid #dce5f2; border-radius: 8px; background: #eef4fe; }
+html[data-theme='liquid'] :is(.book-detail__cover, .search-window__cover) { border-radius: 7px; }
+html[data-theme='liquid'] :is(.book-detail__cover img, .book-detail__cover--placeholder) { border: 1px solid var(--glass-border); border-radius: 9px; }
+html[data-theme='liquid'] .stats__tile { padding: 12px 6px; }
+html[data-theme='liquid'] .stats__tile-value { color: #315f9e; }
+html[data-theme='liquid'] .stats__bar-fill { background: linear-gradient(#94b8f8, #477fdb); border-radius: 5px 5px 0 0; }
+html[data-theme='liquid'] .stats__group { overflow: hidden; }
+html[data-theme='liquid'] .stats__group summary { padding: 7px 10px; }
+html[data-theme='liquid'] .stats__tags li { border: 1px solid var(--glass-border); border-radius: 10px; background: #f3f7fd; }
+html[data-theme='liquid'] :is(.format-badge, .price-dialog__found, .price-dialog__notice, .price-dialog__error) { border-radius: 8px; border-style: solid; }
+html[data-theme='liquid'] .price-dialog__bar { border: 1px solid var(--glass-border); border-radius: 8px; background: #e8eef8; padding: 2px; height: 12px; }
+html[data-theme='liquid'] .price-dialog__bar span { background: #477fdb; border-radius: 6px; }
+html[data-theme='liquid'] .bookshelf__case { border: 1px solid #bccbdc; border-radius: 14px; box-shadow: inset 0 1px 8px #53687b12; }
+html[data-theme='liquid'] .bookshelf__tip { border-radius: 12px; border: 1px solid #dde4ef; background: #fffffff5; color: var(--win-text); box-shadow: var(--glass-shadow); }
+html[data-theme='liquid'] .bookshelf__bar { padding-bottom: 5px; }
+
+/* Menus, toolbar buttons, forms and Toast UI's own chrome. */
+html[data-theme='liquid'] .context-menu {
+  padding: 6px; border: 1px solid #ffffffdf; border-radius: 14px; background: #f4f7fff5;
+  backdrop-filter: blur(18px) saturate(140%); -webkit-backdrop-filter: blur(18px) saturate(140%);
+  box-shadow: var(--glass-shadow);
+}
+html[data-theme='liquid'] .context-menu__item { padding: 7px 20px; border: none; border-radius: 8px; background: transparent; box-shadow: none; font-size: 13px; }
+html[data-theme='liquid'] .menubar { padding: 4px; background: #eaf0f980; border-bottom: 1px solid var(--glass-border); box-shadow: none; }
+html[data-theme='liquid'] .menubar__menu { border: 0; background: transparent; box-shadow: none; padding: 0 2px; }
+html[data-theme='liquid'] .menubar__top { padding: 5px 8px; border: none; background: transparent; box-shadow: none; border-radius: 7px; }
+html[data-theme='liquid'] .menubar__top.is-open { background: #dfe9fa; color: #2159b8; border-style: solid; }
+html[data-theme='liquid'] .toolbar { padding: 6px 2px; background: transparent; border-top: none; border-bottom: 1px solid var(--glass-border); box-shadow: none; gap: 3px; }
+html[data-theme='liquid'] .toolbar::before { display: none; }
+html[data-theme='liquid'] :is(.toolbar__button, .toolbar__button:active, .toolbar__button.is-pressed, .toolbar__button.is-pressed:hover) {
+  padding: 5px 7px; border: 1px solid transparent; border-radius: 9px; background: transparent;
+  box-shadow: none; background-image: none; font-size: 11px;
+}
+html[data-theme='liquid'] .toolbar__button.is-pressed { background: #e0eafa; color: #2159b8; border-color: #ccdafa; }
+html[data-theme='liquid'] :is(.toolbar__separator, .item-actions__separator) { border-right: none; border-left-color: var(--glass-border); }
+html[data-theme='liquid'] :is(.item-actions__button, .item-actions__button:active) { width: 28px; height: 27px; padding: 3px; border: 1px solid transparent; border-radius: 8px; box-shadow: none; background: transparent; }
+html[data-theme='liquid'] :is(.item-actions__button, .toolbar__button):hover:not(:disabled) { border-color: #d7e1f0; background: #edf3ff; }
+html[data-theme='liquid'] .review-editor .toastui-editor-defaultUI { border: 1px solid var(--glass-border); border-radius: 12px; overflow: hidden; }
+html[data-theme='liquid'] .review-editor__paper { border-radius: 12px; overflow: hidden; }
+html[data-theme='liquid'] .review-editor__paper .toastui-editor-defaultUI { border: 0; }
+html[data-theme='liquid'] .review-editor .toastui-editor-defaultUI-toolbar { padding: 5px; background: #eef3fa; border-bottom: 1px solid var(--glass-border); box-shadow: none; }
+html[data-theme='liquid'] .review-editor .toastui-editor-defaultUI-toolbar button { border-radius: 6px; background-color: transparent; padding: 0; box-shadow: none; }
+html[data-theme='liquid'] .review-editor .toastui-editor-defaultUI-toolbar button:hover:not(:disabled) { border-color: #c9d7ec; background-color: #fff; }
+html[data-theme='liquid'] .review-editor .toastui-editor-toolbar-divider { box-shadow: none; background: #ccd7e7; }
+html[data-theme='liquid'] .review-editor .review-editor__status { border-top: 1px solid var(--glass-border); background: #eef3fa; padding: 6px; gap: 8px; }
+html[data-theme='liquid'] .review-editor__pane { overflow: hidden; }
+html[data-theme='liquid'] .review-band { padding: 9px; }
+
+/* Dialogs, notifications, and power screens inherit the document theme. */
+html[data-theme='liquid'] .modal-overlay { background: #33436124; backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px); }
+html[data-theme='liquid'] .modal98 { border: 1px solid #ffffffda; border-radius: 20px; background: #f6f8fffa; box-shadow: var(--glass-shadow); overflow: hidden; }
+html[data-theme='liquid'] .modal98__titlebar { padding: 12px 14px; background: #eaf0fb; color: var(--win-title-text); }
+html[data-theme='liquid'] .modal98__body { line-height: 1.65; }
+html[data-theme='liquid'] .modal98__buttons { justify-content: flex-end; padding: 10px 16px 16px; }
+html[data-theme='liquid'] :is(.drive-toast, .tray-status__tip, .autosave-notice) { padding: 10px 14px; border: 1px solid #ffffffd9; border-radius: 13px; background: #f8fafff7; color: var(--win-text); box-shadow: var(--glass-shadow); }
+html[data-theme='liquid'] .power { background: var(--glass-wallpaper); color: var(--win-text); }
+html[data-theme='liquid'] .power__logo { display: grid; place-items: center; border-radius: 24px; color: #fff; background: linear-gradient(145deg, #71b8ff, #3272e4); border: 1px solid #ffffffa3; box-shadow: inset 0 1px 2px #ffffff95, 0 6px 16px #4469b325; filter: none; }
+html[data-theme='liquid'] .power__name { font: 650 44px/1.15 -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; text-shadow: none; letter-spacing: -2px; }
+html[data-theme='liquid'] .power__name strong { font-size: inherit; }
+html[data-theme='liquid'] .power__sub { color: #536780; text-shadow: none; }
+html[data-theme='liquid'] .power__progress { height: 7px; width: min(260px, 70vw); border: none; border-radius: 10px; background: #ffffff7a; }
+html[data-theme='liquid'] .power__progress span { top: 0; bottom: 0; background: #3776de; border-radius: 10px; }
+html[data-theme='liquid'] :is(.power__message, .power__off-message) { font-family: inherit; color: var(--win-text); text-shadow: none; }
+html[data-theme='liquid'] .power__off-hint { color: var(--win-text-muted); }
+html[data-theme='liquid'] .construction-bar { height: 3px; border: none; border-radius: 3px; background: linear-gradient(90deg, #7faef6, #bb9ae9); }
+
+html[data-theme='liquid'] .theme-picker { padding: 6px 8px 12px; }
+html[data-theme='liquid'] .theme-picker__option { padding: 9px; gap: 10px; border-radius: 15px; background: #ffffffb8; }
+html[data-theme='liquid'] .theme-picker__option.is-selected { border-color: #5389e6; outline: 2px solid #5389e6; outline-offset: 0; box-shadow: 0 3px 14px #3776de18; }
+html[data-theme='liquid'] .theme-picker__check { color: #2469df; }
+html[data-theme='liquid'] .theme-picker__status { color: #315a99; }
+
+/* Replace the classic scrollbar's arrows, bevel, and checkerboard. */
+@media (pointer: fine) {
+  html[data-theme='liquid'] *::-webkit-scrollbar { width: 9px; height: 9px; }
+  html[data-theme='liquid'] *::-webkit-scrollbar-track { background: transparent; background-image: none; }
+  html[data-theme='liquid'] *::-webkit-scrollbar-thumb { background: #a1b1cb; border: 2px solid #f3f6fb; border-radius: 12px; box-shadow: none; }
+  html[data-theme='liquid'] *::-webkit-scrollbar-button:single-button { display: none; }
+  html[data-theme='liquid'] *::-webkit-scrollbar-corner { background: transparent; }
+}
+@supports not selector(::-webkit-scrollbar) {
+  html[data-theme='liquid'] * { scrollbar-width: thin; scrollbar-color: #a1b1cb transparent; }
+}
+
+/* Full-screen reading on mobile, above the floating dock and home indicator. */
+html[data-theme='liquid'] .desktop.is-mobile { --taskbar-h: calc(88px + env(safe-area-inset-bottom, 0px)); }
+html[data-theme='liquid'] .is-mobile .desktop__icons { gap: 14px 6px; padding-top: calc(24px + env(safe-area-inset-top, 0px)); }
+html[data-theme='liquid'] .is-mobile .desktop-icon { width: auto; min-height: 98px; }
+html[data-theme='liquid'] .is-mobile .desktop-icon__glyph { width: 62px; height: 62px; border-radius: 19px; }
+html[data-theme='liquid'] .is-mobile .desktop-icon__glyph .pixel-icon { width: 32px; height: 32px; }
+html[data-theme='liquid'] .is-mobile .win--maximized { bottom: var(--taskbar-h); border-radius: 0 0 20px 20px; background: #f7f9ff; }
+html[data-theme='liquid'] .is-mobile .win__titlebar { padding: 8px 12px; min-height: 56px; }
+html[data-theme='liquid'] .is-mobile .win--maximized .win__titlebar { padding-top: calc(8px + env(safe-area-inset-top, 0px)); border-radius: 0; }
+html[data-theme='liquid'] .is-mobile .win__control { width: 40px; height: 40px; }
+html[data-theme='liquid'] .is-mobile .taskbar { left: 10px; right: 10px; bottom: calc(12px + env(safe-area-inset-bottom, 0px)); height: 64px; padding: 8px; gap: 5px; }
+html[data-theme='liquid'] .is-mobile .taskbar button { min-height: 44px; height: 44px; padding-inline: 10px; }
+html[data-theme='liquid'] .is-mobile .taskbar__item { max-width: 120px; }
+html[data-theme='liquid'] .is-mobile .taskbar__clock { display: none; }
+html[data-theme='liquid'] .is-mobile .taskbar__theme { min-width: 44px; }
+html[data-theme='liquid'] .is-mobile .start-menu { min-width: min(290px, calc(100vw - 38px)); max-width: calc(100vw - 38px); }
+html[data-theme='liquid'] .is-mobile .start-menu__item { min-height: 44px; font-size: 14px; }
+html[data-theme='liquid'] .is-mobile :is(input, select, textarea) { font-size: 16px; }
+html[data-theme='liquid'] .m-content button { min-height: 44px; }
+html[data-theme='liquid'] .m-content .book-list__tab { padding-inline: 2px; font-size: 12px; }
+html[data-theme='liquid'] .is-mobile .theme-picker__options { gap: 10px; }
+html[data-theme='liquid'] .is-mobile .theme-preview { height: 104px; }
+
+@media (prefers-reduced-motion: reduce) {
+  html[data-theme='liquid'] *, html[data-theme='liquid'] *::before, html[data-theme='liquid'] *::after { transition: none !important; animation: none !important; }
+  html[data-theme='liquid'] .power__progress span { left: 15%; width: 70%; }
+}
+@media (prefers-reduced-transparency: reduce), (prefers-contrast: more) {
+  html[data-theme='liquid'] :is(.taskbar, .start-menu, .win__titlebar, .context-menu, .modal98) { background: #f4f7fc; border-color: #8398b9; backdrop-filter: none; -webkit-backdrop-filter: none; }
+  html[data-theme='liquid'] .glass-backdrop { display: none; }
+  html[data-theme='liquid'] button { border-color: #8398b9; }
+}
+@media (forced-colors: active) {
+  html[data-theme='liquid'] :is(.taskbar, .start-menu, .win, .win__titlebar, .modal98, .context-menu) { background: Canvas; color: CanvasText; border: 1px solid CanvasText; box-shadow: none; }
+  html[data-theme='liquid'] .glass-backdrop { display: none; }
+  html[data-theme='liquid'] .theme-picker__option.is-selected { outline-color: Highlight; }
+}

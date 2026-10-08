@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { useLibraryDb } from './hooks/useLibraryDb'
 import { useWindowManager } from './hooks/useWindowManager'
 import { setDesktopMode, useDesktopMode, useIsMobile } from './hooks/useMediaQuery'
+import { useTheme } from './hooks/useTheme'
 import DesktopIcon from './components/DesktopIcon'
 import Window from './components/Window'
 import Taskbar from './components/Taskbar'
@@ -26,14 +27,18 @@ import PowerScreen from './components/PowerScreen'
 import ShutdownDialog from './components/ShutdownDialog'
 import TetrisWindow from './components/TetrisWindow'
 import SaveStatusTray from './components/SaveStatusTray'
+import ThemePicker from './components/ThemePicker'
 import { readReviewDraft } from './utils/reviewDrafts'
 import './App.css'
 import './mobile.css' // App.css 뒤에 불러와야 모바일 덮어쓰기가 우선합니다
+import './themes/theme-picker.css'
+import './themes/liquid.css'
 
 // 부팅 화면은 탭(세션)마다 처음 한 번만 보여 줍니다. 새로고침에는 다시 나오지 않습니다.
 const BOOT_KEY = 'library98-booted'
 
 export default function App() {
+  const theme = useTheme()
   const isMobile = useIsMobile()
   // 모바일에서 켠 PC 화면 모드. 켜져 있으면 시작 메뉴에 "모바일 화면으로"를 보여 줍니다.
   const desktopMode = useDesktopMode()
@@ -105,12 +110,18 @@ export default function App() {
     return () => window.removeEventListener('keydown', handler)
   }, [isReady, saveLibrary, windows])
 
+  // Give new glass windows room for the larger controls; existing windows keep their geometry.
+  const contentWindowSize = (width, height) => ({
+    width,
+    height: theme === 'liquid' ? Math.max(220, Math.min(height + 120, window.innerHeight - 130)) : height,
+  })
+
   const openLibraryWindow = () =>
     openWindow('library', {
       title: '서재',
       icon: 'library',
       initialPosition: { x: 70, y: 50 },
-      initialSize: { width: 920, height: 560 },
+      initialSize: contentWindowSize(920, 560),
     })
 
   // 랭킹/인용구 창에서 책을 누르면 서재 창을 열고 그 책으로 이동시킵니다. (모바일)
@@ -119,7 +130,7 @@ export default function App() {
       title: '서재',
       icon: 'library',
       initialPosition: { x: 70, y: 50 },
-      initialSize: { width: 920, height: 560 },
+      initialSize: contentWindowSize(920, 560),
       focus: { bookId, nonce: Date.now() },
     })
 
@@ -129,7 +140,7 @@ export default function App() {
       title: '검색',
       icon: 'search',
       initialPosition: { x: 110, y: 70 },
-      initialSize: { width: 760, height: 540 },
+      initialSize: contentWindowSize(760, 540),
       ...(filter?.kind ? { filter } : {}),
     })
 
@@ -205,7 +216,7 @@ export default function App() {
       title: '다음 책',
       icon: 'bookmark',
       initialPosition: { x: 120, y: 80 },
-      initialSize: { width: 760, height: 520 },
+      initialSize: contentWindowSize(760, 520),
     })
 
   const openBookshelfWindow = () =>
@@ -213,7 +224,7 @@ export default function App() {
       title: '책장',
       icon: 'bookshelf',
       initialPosition: { x: 150, y: 60 },
-      initialSize: { width: 820, height: 540 },
+      initialSize: contentWindowSize(820, 540),
     })
 
   // 시계를 빠르게 여러 번 누르면 나오는 크레딧(이스터에그)
@@ -260,7 +271,7 @@ export default function App() {
       title: '독서 통계',
       icon: 'chart',
       initialPosition: { x: 100, y: 40 },
-      initialSize: { width: 720, height: 580 },
+      initialSize: contentWindowSize(720, 580),
     })
 
   // 서재 창의 "감상문 추가/수정"은 인라인이 아니라 별도의 뜨는 창으로 엽니다.
@@ -333,6 +344,15 @@ export default function App() {
     if (w.minimized) focusWindow(id)
   }
 
+  const openThemeWindow = () => {
+    const width = Math.min(480, window.innerWidth - 24)
+    openWindow('appearance', {
+      title: '화면 테마', icon: 'palette', dialog: true,
+      initialPosition: { x: Math.max(12, (window.innerWidth - width) / 2), y: Math.max(24, (window.innerHeight - 380) / 2) },
+      initialSize: { width, height: 0 },
+    })
+  }
+
   const startMenuItems = [
     { icon: 'library', label: '서재', onClick: openLibraryWindow },
     { icon: 'bookshelf', label: '책장', onClick: openBookshelfWindow },
@@ -353,6 +373,7 @@ export default function App() {
       : []),
     { separator: true },
     ...(desktopMode ? [{ icon: 'computer', label: '모바일 화면으로', onClick: () => setDesktopMode(false) }] : []),
+    { icon: 'palette', label: '화면 테마', onClick: openThemeWindow },
     { icon: 'computer', label: '시스템 종료...', onClick: openShutdownDialog },
   ]
 
@@ -374,6 +395,7 @@ export default function App() {
       : []),
     { separator: true },
     { icon: 'computer', label: 'PC 화면으로', onClick: () => setDesktopMode(true) },
+    { icon: 'palette', label: '화면 테마', onClick: openThemeWindow },
     { icon: 'computer', label: '시스템 종료...', onClick: openShutdownDialog },
   ]
 
@@ -433,6 +455,7 @@ export default function App() {
   }
 
   const renderWindowContent = (w) => {
+    if (w.id === 'appearance') return <ThemePicker />
     if (isMobile) {
       const mobileContent = renderMobileContent(w)
       if (mobileContent !== undefined) return mobileContent
@@ -707,6 +730,7 @@ export default function App() {
       ))}
 
       <Taskbar windows={windows} activeId={activeId} onToggle={handleToggleFromTaskbar} menuItems={isMobile ? mobileMenuItems : startMenuItems}
+        onOpenTheme={openThemeWindow}
         onClockEasterEgg={openCreditsWindow}
         tray={
           // 모바일은 읽기 전용이라 저장 상태를 보여 주지 않습니다.

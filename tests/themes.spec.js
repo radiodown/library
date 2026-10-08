@@ -1,0 +1,116 @@
+import { test, expect } from '@playwright/test'
+
+test.beforeEach(async ({ page }) => {
+  await page.addInitScript(() => sessionStorage.setItem('library98-booted', '1'))
+})
+
+async function chooseTheme(page, name) {
+  await page.getByRole('button', { name: '화면 테마', exact: true }).click()
+  const picker = page.getByRole('group', { name: '화면 테마 선택' })
+  const option = picker.getByRole('button', { name: new RegExp(`^${name}`) })
+  await option.click()
+  await expect(option).toHaveAttribute('aria-pressed', 'true')
+  return page.locator('.win--dialog').filter({ has: picker })
+}
+
+test('theme selection persists, renders the package effect, and restores classic', async ({ page }) => {
+  const errors = []
+  page.on('pageerror', (error) => errors.push(error.message))
+  await page.goto('/')
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'classic')
+  const pickerWindow = await chooseTheme(page, 'Liquid Glass')
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'liquid')
+  await expect(page.locator('.taskbar .glass-backdrop__effect filter')).toHaveCount(1)
+  await pickerWindow.locator('.win__control--close').click()
+  await page.reload()
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'liquid')
+  await page.getByRole('button', { name: '시작', exact: true }).click()
+  await page.getByRole('menuitem', { name: '화면 테마', exact: true }).click()
+  await page.getByRole('group', { name: '화면 테마 선택' }).getByRole('button', { name: /^클래식/ }).click()
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'classic')
+  await expect(page.locator('.glass-backdrop')).toHaveCount(0)
+  await page.reload()
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'classic')
+  expect(errors).toEqual([])
+})
+
+test('switching themes keeps the mounted editor, unsaved text, and window geometry', async ({ page }) => {
+  const errors = []
+  page.on('pageerror', (error) => errors.push(error.message))
+  await page.goto('/')
+  await page.getByRole('button', { name: '시작', exact: true }).click()
+  await page.getByRole('menuitem', { name: '새 서재 만들기', exact: true }).click()
+  await page.locator('.desktop-icon').filter({ hasText: /^감상문$/ }).dblclick()
+  await page.getByRole('button', { name: '새 책 추가', exact: true }).click()
+  await page.getByLabel('제목 *', { exact: true }).fill('어린 왕자')
+  await page.getByLabel('저자', { exact: true }).fill('앙투안 드 생텍쥐페리')
+  await page.getByRole('button', { name: '책 추가', exact: true }).click()
+  await page.getByRole('button', { name: '새 감상문 쓰기', exact: true }).click()
+  const editor = page.getByRole('region', { name: '감상문 편집기' })
+  const body = editor.locator('.toastui-editor-ww-container [contenteditable="true"]')
+  await body.fill('가장 중요한 것은 눈에 보이지 않는다.\n이 문장을 오래 기억하고 싶다.')
+  const originalEditor = await body.elementHandle()
+  const editorWindow = page.locator('.win').filter({ has: editor })
+  const before = await editorWindow.boundingBox()
+  let pickerWindow = await chooseTheme(page, 'Liquid Glass')
+  await expect(body).toContainText('이 문장을 오래 기억하고 싶다.')
+  expect(await originalEditor.evaluate((element) => element.isConnected)).toBe(true)
+  expect(await editorWindow.boundingBox()).toEqual(before)
+  await page.screenshot({ path: 'test-results/liquid-theme-desktop.png', animations: 'disabled' })
+  await pickerWindow.locator('.win__control--close').click()
+  pickerWindow = await chooseTheme(page, '클래식')
+  expect(await originalEditor.evaluate((element) => element.isConnected)).toBe(true)
+  await expect(body).toContainText('가장 중요한 것은 눈에 보이지 않는다.')
+  await pickerWindow.locator('.win__control--close').click()
+  await editor.click()
+  await page.keyboard.press('Control+s')
+  await expect(editor).toContainText('서재에 반영됨')
+  expect(errors).toEqual([])
+})
+
+test('mobile theme picker and menu fit the viewport and reserve space above the dock', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 })
+  await page.addInitScript(() => localStorage.setItem('library:theme', 'liquid'))
+  await page.goto('/')
+  await expect(page.locator('.desktop')).toHaveClass(/is-mobile/)
+  const pickerWindow = await chooseTheme(page, '클래식')
+  await page.getByRole('group', { name: '화면 테마 선택' }).getByRole('button', { name: /^Liquid Glass/ }).click()
+  const pickerBox = await pickerWindow.boundingBox()
+  expect(pickerBox.x).toBeGreaterThanOrEqual(0)
+  expect(pickerBox.x + pickerBox.width).toBeLessThanOrEqual(390)
+  await page.screenshot({ path: 'test-results/liquid-theme-mobile.png', animations: 'disabled' })
+  await pickerWindow.locator('.win__control--close').click()
+  await page.getByRole('button', { name: '시작', exact: true }).click()
+  const menuBox = await page.locator('.start-menu').boundingBox()
+  expect(menuBox.y).toBeGreaterThanOrEqual(0)
+  expect(menuBox.x + menuBox.width).toBeLessThanOrEqual(390)
+  await page.getByRole('menuitem', { name: '서재', exact: true }).click()
+  const winBox = await page.locator('.win--maximized').boundingBox()
+  const dockBox = await page.locator('.taskbar').boundingBox()
+  expect(winBox.y + winBox.height).toBeLessThanOrEqual(dockBox.y)
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true)
+})
+
+test('theme still switches when preference storage is unavailable', async ({ page }) => {
+  await page.addInitScript(() => {
+    const original = Storage.prototype.setItem
+    Storage.prototype.setItem = function (key, value) {
+      if (key === 'library:theme') throw new DOMException('Storage blocked', 'SecurityError')
+      return original.call(this, key, value)
+    }
+  })
+  await page.goto('/')
+  await chooseTheme(page, 'Liquid Glass')
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'liquid')
+  await expect(page.getByRole('status')).toContainText('Liquid Glass 테마를 사용 중입니다.')
+})
+
+test('invalid preferences use classic and increased contrast omits refraction', async ({ page }) => {
+  await page.addInitScript(() => localStorage.setItem('library:theme', 'unknown-theme'))
+  await page.emulateMedia({ contrast: 'more', reducedMotion: 'reduce' })
+  await page.goto('/')
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'classic')
+  await chooseTheme(page, 'Liquid Glass')
+  await expect(page.locator('.glass-backdrop__effect')).toHaveCount(0)
+  await expect(page.locator('.taskbar')).toHaveCSS('background-color', 'rgb(244, 247, 252)')
+})

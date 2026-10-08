@@ -1,4 +1,6 @@
 import { ICONS, PALETTE } from '../utils/pixelIcons'
+import { useTheme } from '../hooks/useTheme'
+import ModernIcon from './ModernIcon'
 
 // 아이콘마다 색별로 가로 연속 픽셀을 한 사각형으로 묶은 path를 한 번만 만들어 둡니다.
 const PATHS = Object.fromEntries(
@@ -48,6 +50,8 @@ const PATHS = Object.fromEntries(
  * 실제 표시 크기는 CSS(.pixel-icon 폭/높이)가 size 속성보다 우선하므로 화면별로 CSS로 키울 수 있습니다.
  */
 export default function PixelIcon({ name, size = 16, className = '', centered = false }) {
+  const theme = useTheme()
+  if (theme === 'liquid' || name === 'palette') return <ModernIcon name={name} size={size} className={className} />
   const icon = PATHS[size >= 32 && PATHS[`${name}@32`] ? `${name}@32` : name]
   if (!icon) return null
   return (
