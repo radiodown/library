@@ -25,5 +25,7 @@ playwright-report/
 *.sln
 *.sw?
 
+library2/
 # 로컬 환경 변수 (API 키)
 .env.local
+
